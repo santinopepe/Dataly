@@ -26,6 +26,11 @@ extern CompilationStatus ParenthesisLexemeAction(TokenLabel label);
 extern CompilationStatus SubexpressionLexemeAction();
 extern CompilationStatus UnknownLexemeAction();
 
+extern CompilationStatus KeywordLexemeAction(TokenLabel label);
+extern CompilationStatus IdentifierLexemeAction();
+extern CompilationStatus StringLiteralLexemeAction();
+extern CompilationStatus OperatorLexemeAction(TokenLabel label);
+
 %}
 
 /**
@@ -43,6 +48,8 @@ extern CompilationStatus UnknownLexemeAction();
  * @see https://westes.github.io/flex/manual/Patterns.html
  */
 whitespace			[[:space:]]+
+identifier			[a-zA-Z_][a-zA-Z0-9_]*
+string_literal		\"[^\"]*\"
 
 %%
 
@@ -54,7 +61,36 @@ whitespace			[[:space:]]+
 
 %}
 
-"{"									{ return EnterImportExpressionLexemeAction(IMPORT_EXPRESSION); }
+
+
+"param"				{ return KeywordLexemeAction(PARAM); }
+"source"			{ return KeywordLexemeAction(SOURCE); }
+"dataset"			{ return KeywordLexemeAction(DATASET); }
+"transform"			{ return KeywordLexemeAction(TRANSFORM); }
+"sink"				{ return KeywordLexemeAction(SINK); }
+"write"				{ return KeywordLexemeAction(WRITE); }
+"from"				{ return KeywordLexemeAction(FROM); }
+"use"				{ return KeywordLexemeAction(USE); }
+"filter"			{ return KeywordLexemeAction(FILTER); }
+"withColumn"		{ return KeywordLexemeAction(WITH_COLUMN); }
+"select"			{ return KeywordLexemeAction(SELECT); }
+"into"				{ return KeywordLexemeAction(INTO); }
+"and"				{ return KeywordLexemeAction(AND); }
+"or"				{ return KeywordLexemeAction(OR); }
+"is"				{ return KeywordLexemeAction(IS); }
+"null"				{ return KeywordLexemeAction(NULL_TOKEN); }
+"true"				{ return KeywordLexemeAction(TRUE_TOKEN); }
+"false"				{ return KeywordLexemeAction(FALSE_TOKEN); }
+
+"="					{ return OperatorLexemeAction(ASSIGN); }
+","					{ return OperatorLexemeAction(COMMA); }
+">"					{ return OperatorLexemeAction(GREATER); }
+"<"					{ return OperatorLexemeAction(LESS); }
+
+{string_literal}	{ return StringLiteralLexemeAction(); }
+{identifier}		{ return IdentifierLexemeAction(); }
+
+"{"					{ return EnterImportExpressionLexemeAction(IMPORT_EXPRESSION); }
 <IMPORT_EXPRESSION>[^{}]+			{ return SubexpressionLexemeAction(); }
 <IMPORT_EXPRESSION>"}"				{ return LeaveImportExpressionLexemeAction(); }
 <IMPORT_EXPRESSION>.				{ return UnknownLexemeAction(); }
