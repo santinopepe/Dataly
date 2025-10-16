@@ -1,0 +1,20 @@
+/* Complete ETL pipeline example */
+param inputFile = "/data/sales.csv"
+param outputFile = "/results/processed_sales.json"
+
+source sales from inputFile {
+    format = "csv"
+    header = true
+    delimiter = ","
+}
+
+dataset filtered_sales = sales.filter(amount > 100 and status = "completed")
+dataset with_tax = filtered_sales.withColumn("tax", amount * 0.1)
+dataset final = with_tax.select("id", "amount", "tax", "date")
+
+sink output to outputFile {
+    format = "json"
+    mode = "overwrite"
+}
+
+write final to output

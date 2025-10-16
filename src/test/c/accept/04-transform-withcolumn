@@ -1,0 +1,1 @@
+transform users.withColumn("category", "adult")

@@ -1,0 +1,4 @@
+sink output to "result.csv" {
+    format = "csv"
+    mode = "overwrite"
+}

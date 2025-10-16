@@ -1,0 +1,2 @@
+param condition = true
+dataset filtered = data.filter(active = condition)

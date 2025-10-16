@@ -1,0 +1,10 @@
+param maxAge = 65
+source employees from "employees.json" {
+    format = "json"
+}
+dataset adults = employees.filter(age >= 18 and age <= maxAge)
+transform adults.withColumn("status", "active")
+sink results to "output.parquet" {
+    format = "parquet"
+}
+write adults to results

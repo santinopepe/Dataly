@@ -1,0 +1,4 @@
+source data from "file.csv" {
+    format = "csv"
+    header = true
+}
