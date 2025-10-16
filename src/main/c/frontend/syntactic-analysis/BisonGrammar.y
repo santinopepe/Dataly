@@ -159,8 +159,8 @@ void yyerror(const YYLTYPE * location, const char * message) {}
 %%
 
 // IMPORTANT: To use λ in the following grammar, use the %empty symbol.
-//program: expression											{ $$ = ExpressionProgramSemanticAction($1); }
 program: statements											{ $$ = StatementsSemanticAction($1); }
+	| expression											{ $$ = ExpressionProgramSemanticAction($1); }
 	;
 
 statements: statement										{ $$ = CreateStatementsSemanticAction($1); }

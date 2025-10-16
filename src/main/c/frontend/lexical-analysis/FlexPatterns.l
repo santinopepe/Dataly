@@ -38,7 +38,6 @@ extern CompilationStatus OperatorLexemeAction(TokenLabel label);
  *
  * @see https://westes.github.io/flex/manual/Start-Conditions.html
  */
-%x IMPORT_EXPRESSION
 %x MULTILINE_COMMENT
 
 /**
@@ -90,10 +89,8 @@ string_literal		\"[^\"]*\"
 {string_literal}	{ return StringLiteralLexemeAction(); }
 {identifier}		{ return IdentifierLexemeAction(); }
 
-"{"					{ return EnterImportExpressionLexemeAction(IMPORT_EXPRESSION); }
-<IMPORT_EXPRESSION>[^{}]+			{ return SubexpressionLexemeAction(); }
-<IMPORT_EXPRESSION>"}"				{ return LeaveImportExpressionLexemeAction(); }
-<IMPORT_EXPRESSION>.				{ return UnknownLexemeAction(); }
+"{"					{ return OperatorLexemeAction(OPEN_BRACE); }
+"}"					{ return OperatorLexemeAction(CLOSE_BRACE); }
 
 "/*"								{ return EnterMultilineCommentLexemeAction(MULTILINE_COMMENT); }
 <MULTILINE_COMMENT>"*/"				{ return LeaveMultilineCommentLexemeAction(); }

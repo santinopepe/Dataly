@@ -115,7 +115,10 @@ CompilationStatus IntegerLexemeAction() {
 }
 
 CompilationStatus LeaveImportExpressionLexemeAction() {
-	pushInputBuffer(_inputBuffer);
+	if (_inputBuffer != NULL) {
+		pushInputBuffer(_inputBuffer);
+		_inputBuffer = NULL;
+	}
 	leaveLexicalAnalyzerContext(_lexicalAnalyzer);
 	if (_logIgnoredLexemes) {
 		Token * token = createToken(_lexicalAnalyzer, CLOSE_BRACE);
@@ -145,7 +148,7 @@ CompilationStatus ParenthesisLexemeAction(TokenLabel label) {
 
 CompilationStatus SubexpressionLexemeAction() {
 	Token * token = createToken(_lexicalAnalyzer, IGNORED);
-	_inputBuffer = createInputBuffer(_lexicalAnalyzer, token->lexeme);
+	_inputBuffer = createInputBufferFromString(_lexicalAnalyzer, token->lexeme);
 	if (_logIgnoredLexemes) {
 		_logTokenAction(__FUNCTION__, token);
 	}
