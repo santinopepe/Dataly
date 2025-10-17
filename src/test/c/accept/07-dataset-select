@@ -1,1 +1,1 @@
-dataset selected = data.select("name", "age", "email")
+dataset selected from data

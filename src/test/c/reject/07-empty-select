@@ -1,0 +1,2 @@
+transform result = from data use select {
+}

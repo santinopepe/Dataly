@@ -1,4 +1,0 @@
-sink output to "file.csv" {
-    format = "csv"
-    invalidProperty = "value"
-}

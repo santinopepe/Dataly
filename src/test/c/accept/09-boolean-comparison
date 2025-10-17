@@ -1,2 +1,2 @@
-param condition = true
-dataset filtered = data.filter(active = condition)
+param condition = "true"
+dataset filtered from data

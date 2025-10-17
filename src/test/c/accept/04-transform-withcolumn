@@ -1,1 +1,3 @@
-transform users.withColumn("category", "adult")
+transform processed = from users use withColumn {
+    category = "adult"
+}
