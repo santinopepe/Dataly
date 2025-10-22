@@ -1,6 +1,6 @@
-[![✗](https://img.shields.io/badge/Release-v2.0.0-ffb600.svg?style=for-the-badge)](https://github.com/santinopepe/Flex-Bison-Compiler/releases)
+[![✗](https://img.shields.io/badge/Release-v2.0.0-ffb600.svg?style=for-the-badge)](https://github.com/santinopepe/Dataly/releases)
 
-[![✗](https://github.com/santinopepe/Flex-Bison-Compiler/actions/workflows/pipeline.yaml/badge.svg?branch=production)](https://github.com/santinopepe/Flex-Bison-Compiler/actions/workflows/pipeline.yaml)
+[![✗](https://github.com/santinopepe/Dataly/actions/workflows/pipeline.yaml/badge.svg?branch=production)](https://github.com/santinopepe/Flex-Bison-Compiler/actions/workflows/pipeline.yaml)
 
 # Flex-Bison-Compiler
 
