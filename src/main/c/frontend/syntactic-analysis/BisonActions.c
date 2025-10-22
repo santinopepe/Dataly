@@ -41,7 +41,7 @@ Constant * IntegerConstantSemanticAction(const int value) {
 	_logSyntacticAnalyzerAction(__FUNCTION__);
 	Constant * constant = calloc(1, sizeof(Constant));
 	constant->intValue = value;
-	constant->value = value; // For backend compatibility
+	constant->value = value; 
 	constant->type = INTEGER_CONST;
 	return constant;
 }
@@ -87,14 +87,12 @@ Program * ExpressionProgramSemanticAction(Expression * expression) {
 	return program;
 }
 
-// Helper function to copy token text
+
 static char* copyTokenText(TokenLabel token) {
-	// In a real implementation, you'd extract the actual text from the token
-	// For now, we'll return a placeholder
 	return strdup("token_text");
 }
 
-// DSL Semantic Actions Implementation
+
 
 Program * StatementsSemanticAction(StatementList * statements) {
 	_logSyntacticAnalyzerAction(__FUNCTION__);
@@ -380,7 +378,7 @@ ColumnList * AddColumnSemanticAction(ColumnList * columns, TokenLabel name) {
 	return columns;
 }
 
-// Extended Expression and Factor actions
+
 Constant * StringConstantSemanticAction(TokenLabel value) {
 	_logSyntacticAnalyzerAction(__FUNCTION__);
 	Constant * constant = calloc(1, sizeof(Constant));

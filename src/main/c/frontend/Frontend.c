@@ -59,10 +59,9 @@ InputBuffer * createInputBuffer(LexicalAnalyzer * lexicalAnalyzer, const char * 
 InputBuffer * createInputBufferFromString(LexicalAnalyzer * lexicalAnalyzer, const char * content) {
 	InputBuffer * inputBuffer = (InputBuffer *) calloc(1, sizeof(InputBuffer));
 	inputBuffer->bufferSizeInBytes = YY_BUF_SIZE;
-	inputBuffer->file = NULL; // No file for string-based buffers
+	inputBuffer->file = NULL; 
 	inputBuffer->lexicalAnalyzer = lexicalAnalyzer;
 	
-	// Add newline to ensure proper termination
 	size_t len = strlen(content);
 	char * contentWithNewline = (char *) malloc(len + 2);
 	strcpy(contentWithNewline, content);

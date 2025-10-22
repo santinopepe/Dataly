@@ -14,7 +14,7 @@
 
 /** Initialize module's internal state. */
 ModuleDestructor initializeFlexActionsModule();
-/*
+
 CompilationStatus ArithmeticOperatorLexemeAction(TokenLabel label);
 CompilationStatus EnterImportExpressionLexemeAction(FlexContext context);
 CompilationStatus EnterMultilineCommentLexemeAction(FlexContext context);
@@ -26,7 +26,6 @@ CompilationStatus LeaveMultilineCommentLexemeAction();
 CompilationStatus ParenthesisLexemeAction(TokenLabel label);
 CompilationStatus SubexpressionLexemeAction();
 CompilationStatus UnknownLexemeAction();
-*/
 
 CompilationStatus KeywordLexemeAction(TokenLabel label);
 CompilationStatus IdentifierLexemeAction();

@@ -23,7 +23,7 @@ typedef struct Expression Expression;
 typedef struct Factor Factor;
 typedef struct Program Program;
 
-// DSL Types
+
 typedef enum StatementType StatementType;
 typedef enum ConstantType ConstantType;
 typedef enum ComparisonOperator ComparisonOperator;
@@ -58,7 +58,7 @@ enum ExpressionType {
 	FACTOR,
 	MULTIPLICATION,
 	SUBTRACTION,
-	// DSL Expression types
+
 	COMPARISON,
 	LOGICAL,
 	IDENTIFIER_EXPR,
@@ -76,7 +76,7 @@ enum ProgramType {
 	EXPRESSION_PROGRAM
 };
 
-// DSL Enums
+
 enum StatementType {
 	PARAM_STMT,
 	SOURCE_STMT,
@@ -111,7 +111,7 @@ struct Constant {
 		bool boolValue;
 	};
 	ConstantType type;
-	int value; // For backend compatibility
+	int value; 
 };
 
 struct Factor {
@@ -149,7 +149,7 @@ struct Program {
 	ProgramType type;
 };
 
-// DSL Structures
+
 struct Statement {
 	union {
 		ParamDeclaration* paramDecl;
@@ -262,7 +262,7 @@ void destroyExpression(Expression * expression);
 void destroyFactor(Factor * factor);
 void destroyProgram(Program * program);
 
-// DSL Destructors
+
 void destroyStatement(Statement * statement);
 void destroyStatementList(StatementList * statements);
 void destroyParamDeclaration(ParamDeclaration * param);

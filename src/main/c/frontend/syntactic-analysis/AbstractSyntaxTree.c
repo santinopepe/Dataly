@@ -94,7 +94,7 @@ void destroyProgram(Program * program) {
 	}
 }
 
-// DSL Destructors Implementation
+
 
 void destroyStatement(Statement * statement) {
 	logDebugging(_logger, "Executing destructor: %s", __FUNCTION__);
