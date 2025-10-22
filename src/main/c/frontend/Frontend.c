@@ -56,6 +56,22 @@ InputBuffer * createInputBuffer(LexicalAnalyzer * lexicalAnalyzer, const char * 
 	return inputBuffer;
 }
 
+InputBuffer * createInputBufferFromString(LexicalAnalyzer * lexicalAnalyzer, const char * content) {
+	InputBuffer * inputBuffer = (InputBuffer *) calloc(1, sizeof(InputBuffer));
+	inputBuffer->bufferSizeInBytes = YY_BUF_SIZE;
+	inputBuffer->file = NULL; 
+	inputBuffer->lexicalAnalyzer = lexicalAnalyzer;
+	
+	size_t len = strlen(content);
+	char * contentWithNewline = (char *) malloc(len + 2);
+	strcpy(contentWithNewline, content);
+	strcat(contentWithNewline, "\n");
+	
+	inputBuffer->buffer = yy_scan_string(contentWithNewline, lexicalAnalyzer->scanner);
+	free(contentWithNewline);
+	return inputBuffer;
+}
+
 LexicalAnalyzer * createLexicalAnalyzer() {
 	LexicalAnalyzer * lexicalAnalyzer = (LexicalAnalyzer *) calloc(1, sizeof(LexicalAnalyzer));
 	lexicalAnalyzer->location = calloc(1, sizeof(YYLTYPE));

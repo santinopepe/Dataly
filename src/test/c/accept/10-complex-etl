@@ -1,0 +1,22 @@
+/* Complete ETL pipeline example */
+param inputFile = "/data/sales.csv"
+param outputFile = "/results/processed_sales.json"
+
+source sales {
+    format = "csv"
+    header = "true"
+    delimiter = ","
+}
+
+dataset filtered_sales from sales
+transform with_tax = from filtered_sales use withColumn {
+    tax = "calculated"
+}
+dataset final from with_tax
+
+sink output {
+    format = "json"
+    mode = "overwrite"
+}
+
+write final into output

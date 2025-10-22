@@ -1,11 +1,11 @@
-#include "Calculator.h"
+//#include "Calculator.h"
 
 /* MODULE INTERNAL STATE */
 
-static Logger * _logger = NULL;
+//static Logger * _logger = NULL;
 
 /** Shutdown module's internal state. */
-void _shutdownCalculatorModule() {
+/*void _shutdownCalculatorModule() {
 	if (_logger != NULL) {
 		logDebugging(_logger, "Destroying module: Calculator...");
 		destroyLogger(_logger);
@@ -19,17 +19,17 @@ ModuleDestructor initializeCalculatorModule() {
 }
 
 /** PRIVATE FUNCTIONS */
-
+/*
 static BinaryOperator _expressionTypeToBinaryOperator(const ExpressionType type);
 static ComputationResult _invalidBinaryOperator(const int x, const int y);
 static ComputationResult _invalidComputation();
-
+*/
 /**
  * Converts and expression type to the proper binary operator. If that's not
  * possible, returns a binary operator that always returns an invalid
  * computation result.
  */
-static BinaryOperator _expressionTypeToBinaryOperator(const ExpressionType type) {
+/*static BinaryOperator _expressionTypeToBinaryOperator(const ExpressionType type) {
 	switch (type) {
 		case ADDITION: return add;
 		case DIVISION: return divide;
@@ -44,14 +44,14 @@ static BinaryOperator _expressionTypeToBinaryOperator(const ExpressionType type)
 /**
  * A binary operator that always returns an invalid computation result.
  */
-static ComputationResult _invalidBinaryOperator(const int x, const int y) {
+/*static ComputationResult _invalidBinaryOperator(const int x, const int y) {
 	return _invalidComputation();
 }
 
 /**
  * A computation that always returns an invalid result.
  */
-static ComputationResult _invalidComputation() {
+/*static ComputationResult _invalidComputation() {
 	ComputationResult computationResult = {
 		.succeeded = false,
 		.value = 0
@@ -61,7 +61,7 @@ static ComputationResult _invalidComputation() {
 
 /** PUBLIC FUNCTIONS */
 
-ComputationResult add(const int leftAddend, const int rightAddend) {
+/*ComputationResult add(const int leftAddend, const int rightAddend) {
 	ComputationResult computationResult = {
 		.succeeded = true,
 		.value = leftAddend + rightAddend
@@ -143,3 +143,4 @@ ComputationResult executeCalculator(CompilerState * compilerState) {
 	Program * program = compilerState->abstractSyntaxtTree;
 	return computeExpression(program->expression);
 }
+*/

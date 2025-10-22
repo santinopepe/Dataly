@@ -1,0 +1,12 @@
+param maxAge = "65"
+source employees {
+    format = "json"
+}
+dataset adults from employees
+transform adults_processed = from adults use filter {
+    age > 18
+}
+sink results {
+    format = "parquet"
+}
+write adults_processed into results

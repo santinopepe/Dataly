@@ -1,0 +1,3 @@
+transform processed = from users use withColumn {
+    category = "adult"
+}

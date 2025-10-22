@@ -23,6 +23,9 @@ ModuleDestructor initializeAbstractSyntaxTreeModule() {
 void destroyConstant(Constant * constant) {
 	logDebugging(_logger, "Executing destructor: %s", __FUNCTION__);
 	if (constant != NULL) {
+		if (constant->type == STRING_CONST && constant->stringValue != NULL) {
+			free(constant->stringValue);
+		}
 		free(constant);
 	}
 }
@@ -35,11 +38,24 @@ void destroyExpression(Expression * expression) {
 			case DIVISION:
 			case MULTIPLICATION:
 			case SUBTRACTION:
+			case COMPARISON:
+			case LOGICAL:
 				destroyExpression(expression->leftExpression);
 				destroyExpression(expression->rightExpression);
 				break;
 			case FACTOR:
 				destroyFactor(expression->factor);
+				break;
+			case IDENTIFIER_EXPR:
+				if (expression->identifier != NULL) {
+					free(expression->identifier);
+				}
+				break;
+			case FUNCTION_CALL:
+				if (expression->functionCall.functionName != NULL) {
+					free(expression->functionCall.functionName);
+				}
+				destroyExpression(expression->functionCall.argument);
 				break;
 		}
 		free(expression);
@@ -56,6 +72,11 @@ void destroyFactor(Factor * factor) {
 			case EXPRESSION:
 				destroyExpression(factor->expression);
 				break;
+			case IDENTIFIER_FACTOR:
+				if (factor->identifier != NULL) {
+					free(factor->identifier);
+				}
+				break;
 		}
 		free(factor);
 	}
@@ -64,7 +85,200 @@ void destroyFactor(Factor * factor) {
 void destroyProgram(Program * program) {
 	logDebugging(_logger, "Executing destructor: %s", __FUNCTION__);
 	if (program != NULL) {
-		destroyExpression(program->expression);
+		if (program->type == EXPRESSION_PROGRAM && program->expression != NULL) {
+			destroyExpression(program->expression);
+		} else if (program->type == STATEMENT_LIST_PROGRAM && program->statements != NULL) {
+			destroyStatementList(program->statements);
+		}
 		free(program);
+	}
+}
+
+
+
+void destroyStatement(Statement * statement) {
+	logDebugging(_logger, "Executing destructor: %s", __FUNCTION__);
+	if (statement != NULL) {
+		switch (statement->type) {
+			case PARAM_STMT:
+				destroyParamDeclaration(statement->paramDecl);
+				break;
+			case SOURCE_STMT:
+				destroySourceDeclaration(statement->sourceDecl);
+				break;
+			case DATASET_STMT:
+				destroyDatasetDeclaration(statement->datasetDecl);
+				break;
+			case TRANSFORM_STMT:
+				destroyTransformDeclaration(statement->transformDecl);
+				break;
+			case SINK_STMT:
+				destroySinkDeclaration(statement->sinkDecl);
+				break;
+			case WRITE_STMT:
+				destroyWriteStatement(statement->writeStmt);
+				break;
+		}
+		free(statement);
+	}
+}
+
+void destroyStatementList(StatementList * statements) {
+	logDebugging(_logger, "Executing destructor: %s", __FUNCTION__);
+	if (statements != NULL) {
+		destroyStatement(statements->statement);
+		destroyStatementList(statements->next);
+		free(statements);
+	}
+}
+
+void destroyParamDeclaration(ParamDeclaration * param) {
+	logDebugging(_logger, "Executing destructor: %s", __FUNCTION__);
+	if (param != NULL) {
+		if (param->name != NULL) free(param->name);
+		if (param->value != NULL) free(param->value);
+		free(param);
+	}
+}
+
+void destroySourceDeclaration(SourceDeclaration * source) {
+	logDebugging(_logger, "Executing destructor: %s", __FUNCTION__);
+	if (source != NULL) {
+		if (source->name != NULL) free(source->name);
+		destroyPropertyList(source->properties);
+		free(source);
+	}
+}
+
+void destroyDatasetDeclaration(DatasetDeclaration * dataset) {
+	logDebugging(_logger, "Executing destructor: %s", __FUNCTION__);
+	if (dataset != NULL) {
+		if (dataset->name != NULL) free(dataset->name);
+		if (dataset->sourceName != NULL) free(dataset->sourceName);
+		free(dataset);
+	}
+}
+
+void destroyTransformDeclaration(TransformDeclaration * transform) {
+	logDebugging(_logger, "Executing destructor: %s", __FUNCTION__);
+	if (transform != NULL) {
+		if (transform->name != NULL) free(transform->name);
+		if (transform->sourceName != NULL) free(transform->sourceName);
+		destroyTransformOperationList(transform->operations);
+		free(transform);
+	}
+}
+
+void destroySinkDeclaration(SinkDeclaration * sink) {
+	logDebugging(_logger, "Executing destructor: %s", __FUNCTION__);
+	if (sink != NULL) {
+		if (sink->name != NULL) free(sink->name);
+		destroyPropertyList(sink->properties);
+		free(sink);
+	}
+}
+
+void destroyWriteStatement(WriteStatement * write) {
+	logDebugging(_logger, "Executing destructor: %s", __FUNCTION__);
+	if (write != NULL) {
+		if (write->datasetName != NULL) free(write->datasetName);
+		if (write->sinkName != NULL) free(write->sinkName);
+		free(write);
+	}
+}
+
+void destroyProperty(Property * property) {
+	logDebugging(_logger, "Executing destructor: %s", __FUNCTION__);
+	if (property != NULL) {
+		if (property->key != NULL) free(property->key);
+		if (property->value != NULL) free(property->value);
+		free(property);
+	}
+}
+
+void destroyPropertyList(PropertyList * properties) {
+	logDebugging(_logger, "Executing destructor: %s", __FUNCTION__);
+	if (properties != NULL) {
+		destroyProperty(properties->property);
+		destroyPropertyList(properties->next);
+		free(properties);
+	}
+}
+
+void destroyTransformOperation(TransformOperation * operation) {
+	logDebugging(_logger, "Executing destructor: %s", __FUNCTION__);
+	if (operation != NULL) {
+		switch (operation->type) {
+			case FILTER_OP:
+				destroyFilterOperation(operation->filter);
+				break;
+			case WITH_COLUMN_OP:
+				destroyWithColumnOperation(operation->withColumn);
+				break;
+			case SELECT_OP:
+				destroySelectOperation(operation->select);
+				break;
+		}
+		free(operation);
+	}
+}
+
+void destroyTransformOperationList(TransformOperationList * operations) {
+	logDebugging(_logger, "Executing destructor: %s", __FUNCTION__);
+	if (operations != NULL) {
+		destroyTransformOperation(operations->operation);
+		destroyTransformOperationList(operations->next);
+		free(operations);
+	}
+}
+
+void destroyFilterOperation(FilterOperation * filter) {
+	logDebugging(_logger, "Executing destructor: %s", __FUNCTION__);
+	if (filter != NULL) {
+		destroyExpression(filter->condition);
+		free(filter);
+	}
+}
+
+void destroyWithColumnOperation(WithColumnOperation * withColumn) {
+	logDebugging(_logger, "Executing destructor: %s", __FUNCTION__);
+	if (withColumn != NULL) {
+		destroyColumnAssignmentList(withColumn->assignments);
+		free(withColumn);
+	}
+}
+
+void destroySelectOperation(SelectOperation * select) {
+	logDebugging(_logger, "Executing destructor: %s", __FUNCTION__);
+	if (select != NULL) {
+		destroyColumnList(select->columns);
+		free(select);
+	}
+}
+
+void destroyColumnAssignment(ColumnAssignment * assignment) {
+	logDebugging(_logger, "Executing destructor: %s", __FUNCTION__);
+	if (assignment != NULL) {
+		if (assignment->columnName != NULL) free(assignment->columnName);
+		destroyExpression(assignment->expression);
+		free(assignment);
+	}
+}
+
+void destroyColumnAssignmentList(ColumnAssignmentList * assignments) {
+	logDebugging(_logger, "Executing destructor: %s", __FUNCTION__);
+	if (assignments != NULL) {
+		destroyColumnAssignment(assignments->assignment);
+		destroyColumnAssignmentList(assignments->next);
+		free(assignments);
+	}
+}
+
+void destroyColumnList(ColumnList * columns) {
+	logDebugging(_logger, "Executing destructor: %s", __FUNCTION__);
+	if (columns != NULL) {
+		if (columns->columnName != NULL) free(columns->columnName);
+		destroyColumnList(columns->next);
+		free(columns);
 	}
 }

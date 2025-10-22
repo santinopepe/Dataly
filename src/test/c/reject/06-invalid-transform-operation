@@ -1,0 +1,3 @@
+transform result = from data use invalidOperation {
+    param = "value"
+}
