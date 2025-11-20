@@ -5,6 +5,11 @@
 static LexicalAnalyzer * _lexicalAnalyzer = NULL;
 static Logger * _logger = NULL;
 
+typedef struct LexemeNode {
+	char * lexeme;
+	struct LexemeNode * next;
+} LexemeNode;
+
 /** Shutdown module's internal state. */
 void _shutdownFrontendModule() {
 	if (_logger != NULL) {
@@ -76,6 +81,7 @@ LexicalAnalyzer * createLexicalAnalyzer() {
 	LexicalAnalyzer * lexicalAnalyzer = (LexicalAnalyzer *) calloc(1, sizeof(LexicalAnalyzer));
 	lexicalAnalyzer->location = calloc(1, sizeof(YYLTYPE));
 	lexicalAnalyzer->logger = createLogger("LexicalAnalyzer");
+	lexicalAnalyzer->lexemePool = NULL;
 	yylex_init(&lexicalAnalyzer->scanner);
 	lexicalAnalyzer->parser = yypstate_new();
 	flexEnterContext(lexicalAnalyzer, 0);
@@ -89,9 +95,31 @@ Token * createToken(LexicalAnalyzer * lexicalAnalyzer, TokenLabel label) {
 	token->length = yyget_leng(lexicalAnalyzer->scanner);
 	token->lexeme = (char *) calloc(token->length + 1, sizeof(char));
 	token->line = yyget_lineno(lexicalAnalyzer->scanner);
-	token->semanticValue = (SemanticValue *) calloc(1, sizeof(SemanticValue));
-	strncpy(token->lexeme, yyget_text(lexicalAnalyzer->scanner), token->length);
+	 token->semanticValue = (SemanticValue *) calloc(1, sizeof(SemanticValue));
+	 strncpy(token->lexeme, yyget_text(lexicalAnalyzer->scanner), token->length);
+	if (label == IDENTIFIER || label == STRING_LITERAL) {
+		char * poolCopy = strdup(token->lexeme);
+		LexemeNode * node = (LexemeNode *) calloc(1, sizeof(LexemeNode));
+		node->lexeme = poolCopy;
+		node->next = lexicalAnalyzer->lexemePool;
+		lexicalAnalyzer->lexemePool = node;
+		token->semanticValue->token = (TokenLabel) poolCopy;
+	} else {
+		token->semanticValue->token = (TokenLabel) 0;
+	}
 	return token;
+}
+
+static void _freeLexemePool(LexicalAnalyzer * lexicalAnalyzer) {
+	if (lexicalAnalyzer == NULL) return;
+	struct LexemeNode * cur = lexicalAnalyzer->lexemePool;
+	while (cur != NULL) {
+		struct LexemeNode * nxt = cur->next;
+		if (cur->lexeme) free(cur->lexeme);
+		free(cur);
+		cur = nxt;
+	}
+	lexicalAnalyzer->lexemePool = NULL;
 }
 
 FlexContext currentLexicalAnalyzerContext(LexicalAnalyzer * lexicalAnalyzer) {
@@ -176,6 +204,8 @@ CompilationStatus executeSyntacticAnalysis() {
 	}
 	logDebugging(_logger, "Compilation status: %s.", _compilationStatusAsString(status));
 	logDebugging(_logger, "Parsing is done.");
+
+	_freeLexemePool(_lexicalAnalyzer);
 	return status;
 }
 

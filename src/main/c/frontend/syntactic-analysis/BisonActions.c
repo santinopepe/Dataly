@@ -89,7 +89,18 @@ Program * ExpressionProgramSemanticAction(Expression * expression) {
 
 
 static char* copyTokenText(TokenLabel token) {
-	return strdup("token_text");
+
+	if (token == (TokenLabel) 0) {
+		return NULL;
+	}
+	const char * text = (const char *) token;
+	if (text == NULL) return NULL;
+	char * dup = NULL;
+	if (text != NULL) {
+		dup = strdup(text);
+	}
+
+	return dup;
 }
 
 

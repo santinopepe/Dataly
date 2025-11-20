@@ -14,43 +14,59 @@
  * find you, and I will kill you (Bryan Mills; "Taken", 2008).
  */
 const int main(const int length, const char ** arguments) {
-	LexicalAnalyzer * lexicalAnalyzer = createLexicalAnalyzer();
-	Logger * logger = createLogger("EntryPoint");
-	for (int k = 0; k < length; ++k) {
-		logDebugging(logger, "Argument %d: \"%s\"", k, arguments[k]);
-	}
-	CompilerState compilerState = {
-		.abstractSyntaxtTree = NULL,
-		.value = 0
-	};
-	ModuleDestructor moduleDestructors[] = {
-		initializeAbstractSyntaxTreeModule(),
-		initializeFlexActionsModule(lexicalAnalyzer),
-		initializeBisonActionsModule(&compilerState),
-		initializeFrontendModule(lexicalAnalyzer),
-		//initializeGeneratorModule()
-	};
-	CompilationStatus compilationStatus = executeSyntacticAnalysis();
-	Program * program = compilerState.abstractSyntaxtTree;
-	if (compilationStatus == SUCCEEDED) {
-		// ----------------------------------------------------------------------------------------
-		// Beginning of the Backend... ------------------------------------------------------------
-		//logDebugging(logger, "Generating code from DSL...");
-		//executeGenerator(&compilerState);
-		// ...end of the Backend. -----------------------------------------------------------------
-		// ----------------------------------------------------------------------------------------
-	}
-	else {
-		logError(logger, "The syntactic-analysis phase rejects the input program.");
-		compilationStatus = FAILED;
-	}
-	logDebugging(logger, "Releasing AST resources...");
-	destroyProgram(program);
-	for (int k = (sizeof(moduleDestructors)/sizeof(ModuleDestructor)) - 1; 0 <= k; --k) {
-		moduleDestructors[k]();
-	}
-	logDebugging(logger, "Compilation is done.");
-	destroyLogger(logger);
-	destroyLexicalAnalyzer(lexicalAnalyzer);
-	return compilationStatus;
+    LexicalAnalyzer * lexicalAnalyzer = createLexicalAnalyzer();
+    Logger * logger = createLogger("EntryPoint");
+
+    for (int k = 0; k < length; ++k) {
+        logDebugging(logger, "Argument %d: \"%s\"", k, arguments[k]);
+    }
+
+    CompilerState compilerState = {
+        .abstractSyntaxtTree = NULL,
+        .value = 0
+    };
+
+    ModuleDestructor moduleDestructors[] = {
+        initializeAbstractSyntaxTreeModule(),
+        initializeFlexActionsModule(lexicalAnalyzer),
+        initializeBisonActionsModule(&compilerState),
+        initializeFrontendModule(lexicalAnalyzer),
+        initializeGeneratorModule()        
+    };
+
+    // ===================== ANÁLISIS SINTÁCTICO =====================
+    CompilationStatus compilationStatus = executeSyntacticAnalysis();
+    Program * program = compilerState.abstractSyntaxtTree;
+
+    if (compilationStatus == SUCCEEDED) {
+        // ===================== ANÁLISIS SEMÁNTICO =====================
+        compilationStatus = executeSemanticAnalysis(program);
+        if (compilationStatus != SUCCEEDED) {
+            logError(logger, "The semantic-analysis phase rejects the input program.");
+        } else {
+            // ===================== BACKEND =====================
+            logDebugging(logger, "Generating code from DSL...");
+            compilationStatus = executeGenerator(&compilerState);
+            if (compilationStatus != SUCCEEDED) {
+                logError(logger, "The code-generation phase failed.");
+            }
+        }
+    } else {
+        logError(logger, "The syntactic-analysis phase rejects the input program.");
+        compilationStatus = FAILED;
+    }
+
+    // ===================== LIMPIEZA =====================
+    logDebugging(logger, "Releasing AST resources...");
+    destroyProgram(program);
+
+    for (int k = (sizeof(moduleDestructors) / sizeof(ModuleDestructor)) - 1; 0 <= k; --k) {
+        moduleDestructors[k]();
+    }
+
+    logDebugging(logger, "Compilation is done.");
+    destroyLogger(logger);
+    destroyLexicalAnalyzer(lexicalAnalyzer);
+
+    return compilationStatus;
 }
