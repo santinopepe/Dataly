@@ -32,7 +32,7 @@ const int main(const int length, const char ** arguments) {
         initializeFlexActionsModule(lexicalAnalyzer),
         initializeBisonActionsModule(&compilerState),
         initializeFrontendModule(lexicalAnalyzer),
-        //initializeGeneratorModule()
+        initializeGeneratorModule()        
     };
 
     // ===================== ANÁLISIS SINTÁCTICO =====================
@@ -45,9 +45,12 @@ const int main(const int length, const char ** arguments) {
         if (compilationStatus != SUCCEEDED) {
             logError(logger, "The semantic-analysis phase rejects the input program.");
         } else {
-            // ===================== BACKEND  =====================
-            // logDebugging(logger, "Generating code from DSL...");
-            // executeGenerator(&compilerState);
+            // ===================== BACKEND =====================
+            logDebugging(logger, "Generating code from DSL...");
+            compilationStatus = executeGenerator(&compilerState);
+            if (compilationStatus != SUCCEEDED) {
+                logError(logger, "The code-generation phase failed.");
+            }
         }
     } else {
         logError(logger, "The syntactic-analysis phase rejects the input program.");

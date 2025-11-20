@@ -100,9 +100,10 @@ static char* copyTokenText(TokenLabel token) {
 	}
 	const char * text = (const char *) token;
 	if (text == NULL) return NULL;
-	char * dup = strdup(text);
-
-	free((void*) text);
+	char * dup = NULL;
+	if (text != NULL) {
+		dup = strdup(text);
+	}
 	return dup;
 }
 

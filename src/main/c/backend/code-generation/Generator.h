@@ -1,20 +1,14 @@
 #ifndef GENERATOR_HEADER
 #define GENERATOR_HEADER
 
-#include "../../frontend/syntactic-analysis/AbstractSyntaxTree.h"
-#include "../../support/language/String.h"
-#include "../../support/logging/Logger.h"
+#include "../../support/type/CompilationStatus.h"
 #include "../../support/type/CompilerState.h"
 #include "../../support/type/ModuleDestructor.h"
-#include <stdarg.h>
-#include <stdio.h>
 
-/** Initialize module's internal state. */
+// Inicializa el módulo (logger, etc.).
 ModuleDestructor initializeGeneratorModule();
 
-/**
- * Generates the final output using the current compiler state.
- */
-void executeGenerator(CompilerState * compilerState);
+// Ejecuta la generación de código para el AST ya construido y validado.
+CompilationStatus executeGenerator(CompilerState *compilerState);
 
 #endif
