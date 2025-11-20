@@ -89,8 +89,13 @@ Token * createToken(LexicalAnalyzer * lexicalAnalyzer, TokenLabel label) {
 	token->length = yyget_leng(lexicalAnalyzer->scanner);
 	token->lexeme = (char *) calloc(token->length + 1, sizeof(char));
 	token->line = yyget_lineno(lexicalAnalyzer->scanner);
-	token->semanticValue = (SemanticValue *) calloc(1, sizeof(SemanticValue));
-	strncpy(token->lexeme, yyget_text(lexicalAnalyzer->scanner), token->length);
+	 token->semanticValue = (SemanticValue *) calloc(1, sizeof(SemanticValue));
+	 strncpy(token->lexeme, yyget_text(lexicalAnalyzer->scanner), token->length);
+	if (label == IDENTIFIER || label == STRING_LITERAL) {
+		token->semanticValue->token = (TokenLabel) strdup(token->lexeme);
+	} else {
+		token->semanticValue->token = (TokenLabel) 0;
+	}
 	return token;
 }
 
@@ -101,13 +106,6 @@ FlexContext currentLexicalAnalyzerContext(LexicalAnalyzer * lexicalAnalyzer) {
 void destroyInputBuffer(InputBuffer * inputBuffer) {
 	if (inputBuffer != NULL) {
 		if (inputBuffer->buffer != NULL) {
-			/**
-			 * @todo
-			 *	Because "yypop_buffer_state" in "popInputBuffer" deletes the
-			 *	buffer, this line produces a double-free error. However,
-			 *	commenting the line produces a memory-leak when a syntax error
-			 *	takes place inside a secondary input buffer.
-			 */
 			// yy_delete_buffer((YY_BUFFER_STATE) inputBuffer->buffer, (yyscan_t) inputBuffer->lexicalAnalyzer->scanner);
 			inputBuffer->buffer = NULL;
 		}
@@ -150,6 +148,7 @@ void destroyToken(Token * token) {
 			token->lexeme = NULL;
 		}
 		if (token->semanticValue != NULL) {
+			token->semanticValue->token = (TokenLabel) 0; /* clear pointer */
 			free(token->semanticValue);
 			token->semanticValue = NULL;
 		}
