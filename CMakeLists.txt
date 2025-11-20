@@ -42,6 +42,7 @@ if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
 		src/main/c/frontend/syntactic-analysis/AbstractSyntaxTree.c
 		src/main/c/frontend/syntactic-analysis/BisonActions.c
 		src/main/c/frontend/syntactic-analysis/BisonParser.c
+		src/main/c/frontend/semantic-analysis/SemanticAnalyzer.c
 		src/main/c/support/configuration/Environment.c
 		src/main/c/support/language/String.c
 		src/main/c/support/logging/Logger.c
