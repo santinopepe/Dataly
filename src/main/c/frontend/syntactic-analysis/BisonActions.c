@@ -84,6 +84,11 @@ Program * ExpressionProgramSemanticAction(Expression * expression) {
 	Program * program = calloc(1, sizeof(Program));
 	program->expression = expression;
 	program->type = EXPRESSION_PROGRAM;
+
+	// Guardar el AST en el estado del compilador para despues 
+	if (_compilerState != NULL) {
+		_compilerState->abstractSyntaxtTree = program;
+	}
 	return program;
 }
 
@@ -99,7 +104,6 @@ static char* copyTokenText(TokenLabel token) {
 	if (text != NULL) {
 		dup = strdup(text);
 	}
-
 	return dup;
 }
 
@@ -110,6 +114,11 @@ Program * StatementsSemanticAction(StatementList * statements) {
 	Program * program = calloc(1, sizeof(Program));
 	program->statements = statements;
 	program->type = STATEMENT_LIST_PROGRAM;
+
+	// Guardar el AST en el estado del compilador para despues
+	if (_compilerState != NULL) {
+		_compilerState->abstractSyntaxtTree = program;
+	}
 	return program;
 }
 

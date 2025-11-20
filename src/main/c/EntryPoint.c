@@ -3,6 +3,7 @@
 #include "frontend/Frontend.h"
 #include "frontend/lexical-analysis/FlexActions.h"
 #include "frontend/syntactic-analysis/BisonActions.h"
+#include "frontend/semantic-analysis/SemanticAnalyzer.h"
 #include "support/logging/Logger.h"
 #include "support/type/CompilationStatus.h"
 #include "support/type/CompilerState.h"
