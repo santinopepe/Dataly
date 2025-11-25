@@ -194,3 +194,21 @@ CompilationStatus OperatorLexemeAction(TokenLabel label) {
 	destroyToken(token);
 	return status;
 }
+
+CompilationStatus JoinTypeLexemeAction(enum JoinType type) {
+	Token * token = createToken(_lexicalAnalyzer, JOIN_TYPE);
+	token->semanticValue->join_type = type;
+	_logTokenAction(__FUNCTION__, token);
+	CompilationStatus status = pushToken(_lexicalAnalyzer, token);
+	destroyToken(token);
+	return status;
+}
+
+CompilationStatus TypeTokenLexemeAction(UdfParamType type) {
+	Token * token = createToken(_lexicalAnalyzer, TYPE_TOKEN);
+	token->semanticValue->udf_type = type;
+	_logTokenAction(__FUNCTION__, token);
+	CompilationStatus status = pushToken(_lexicalAnalyzer, token);
+	destroyToken(token);
+	return status;
+}

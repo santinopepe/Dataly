@@ -4,6 +4,7 @@
 #include "../../support/logging/Logger.h"
 #include "../../support/type/ModuleDestructor.h"
 #include <stdlib.h>
+#include <stdbool.h>
 
 /** Initialize module's internal state. */
 ModuleDestructor initializeAbstractSyntaxTreeModule();
@@ -47,6 +48,17 @@ typedef struct SelectOperation SelectOperation;
 typedef struct ColumnAssignment ColumnAssignment;
 typedef struct ColumnAssignmentList ColumnAssignmentList;
 typedef struct ColumnList ColumnList;
+typedef struct OrderByItem OrderByItem;
+typedef struct OrderByList OrderByList;
+typedef struct OrderByOperation OrderByOperation;
+typedef struct LimitOperation LimitOperation;
+typedef struct JoinOperation JoinOperation;
+typedef struct GroupByOperation GroupByOperation;
+typedef struct WindowOperation WindowOperation;
+typedef struct ExpressionList ExpressionList;
+typedef struct UdfDeclaration UdfDeclaration;
+typedef struct UdfParam UdfParam;
+typedef struct UdfParamList UdfParamList;
 
 /**
  * Node types for the Abstract Syntax Tree (AST).
@@ -57,6 +69,7 @@ enum ExpressionType {
 	DIVISION,
 	FACTOR,
 	MULTIPLICATION,
+	MODULO,
 	SUBTRACTION,
 
 	COMPARISON,
@@ -83,7 +96,8 @@ enum StatementType {
 	DATASET_STMT,
 	TRANSFORM_STMT,
 	SINK_STMT,
-	WRITE_STMT
+	WRITE_STMT,
+	UDF_STMT
 };
 
 enum ConstantType {
@@ -96,13 +110,36 @@ enum ConstantType {
 enum ComparisonOperator {
 	EQUALS_OP,
 	GREATER_THAN,
-	LESS_THAN
+	LESS_THAN,
+	NOT_EQUALS_OP,
+	GREATER_EQUAL_OP,
+	LESS_EQUAL_OP,
+	IS_NULL_OP,
+	IS_NOT_NULL_OP
 };
 
 enum LogicalOperator {
 	AND_OP,
-	OR_OP
+	OR_OP,
+	NOT_OP
 };
+
+enum JoinType {
+	JOIN_INNER,
+	JOIN_LEFT,
+	JOIN_RIGHT,
+	JOIN_FULL,
+	JOIN_SEMI,
+	JOIN_ANTI
+};
+
+typedef enum {
+	UDF_TYPE_INT,
+	UDF_TYPE_STRING,
+	UDF_TYPE_BOOL,
+	UDF_TYPE_DECIMAL,
+	UDF_TYPE_UNKNOWN
+} UdfParamType;
 
 struct Constant {
 	union {
@@ -135,7 +172,7 @@ struct Expression {
 		char* identifier;
 		struct {
 			char* functionName;
-			Expression* argument;
+			ExpressionList* arguments;
 		} functionCall;
 	};
 	ExpressionType type;
@@ -158,6 +195,7 @@ struct Statement {
 		TransformDeclaration* transformDecl;
 		SinkDeclaration* sinkDecl;
 		WriteStatement* writeStmt;
+		UdfDeclaration* udfDecl;
 	};
 	StatementType type;
 };
@@ -193,6 +231,22 @@ struct SinkDeclaration {
 	PropertyList* properties;
 };
 
+typedef struct UdfParam {
+	char* name;
+	UdfParamType type;
+} UdfParam;
+
+typedef struct UdfParamList {
+	UdfParam* param;
+	struct UdfParamList* next;
+} UdfParamList;
+
+typedef struct UdfDeclaration {
+	char* name;
+	UdfParamList* params;
+	UdfParamType returnType;
+} UdfDeclaration;
+
 struct WriteStatement {
 	char* datasetName;
 	char* sinkName;
@@ -213,11 +267,21 @@ struct TransformOperation {
 		FilterOperation* filter;
 		WithColumnOperation* withColumn;
 		SelectOperation* select;
+		OrderByOperation* orderBy;
+		LimitOperation* limitOp;
+		JoinOperation* join;
+		GroupByOperation* groupBy;
+		WindowOperation* windowOp;
 	};
 	enum {
 		FILTER_OP,
 		WITH_COLUMN_OP,
-		SELECT_OP
+		SELECT_OP,
+	ORDER_BY_OP,
+	LIMIT_OP,
+	JOIN_OP,
+	GROUP_BY_OP,
+	WINDOW_OP
 	} type;
 };
 
@@ -249,8 +313,49 @@ struct ColumnAssignmentList {
 };
 
 struct ColumnList {
-	char* columnName;
+	Expression* expression;
+	char* alias;
 	ColumnList* next;
+};
+
+struct OrderByItem {
+	Expression* expression;
+	bool ascending;
+	OrderByItem* next;
+};
+
+struct OrderByList {
+	OrderByItem* head;
+};
+
+struct OrderByOperation {
+	OrderByItem* items;
+};
+
+struct LimitOperation {
+	int limit;
+};
+
+struct JoinOperation {
+	enum JoinType joinType;
+	char* target;
+	Expression* condition;
+};
+
+struct GroupByOperation {
+	ColumnList* keys;
+	ColumnAssignmentList* aggregations;
+};
+
+struct WindowOperation {
+	ColumnList* partitionBy;
+	OrderByItem* orderBy;
+	ColumnAssignmentList* computations;
+};
+
+struct ExpressionList {
+	Expression* expression;
+	ExpressionList* next;
 };
 
 /**
@@ -281,5 +386,16 @@ void destroySelectOperation(SelectOperation * select);
 void destroyColumnAssignment(ColumnAssignment * assignment);
 void destroyColumnAssignmentList(ColumnAssignmentList * assignments);
 void destroyColumnList(ColumnList * columns);
+void destroyOrderByItems(OrderByItem * items);
+void destroyOrderByList(OrderByList * list);
+void destroyOrderByOperation(OrderByOperation * orderBy);
+void destroyLimitOperation(LimitOperation * limit);
+void destroyJoinOperation(JoinOperation * join);
+void destroyGroupByOperation(GroupByOperation * groupBy);
+void destroyWindowOperation(WindowOperation * windowOp);
+void destroyExpressionList(ExpressionList * list);
+void destroyUdfParam(UdfParam* param);
+void destroyUdfParamList(UdfParamList* list);
+void destroyUdfDeclaration(UdfDeclaration* udf);
 
 #endif
