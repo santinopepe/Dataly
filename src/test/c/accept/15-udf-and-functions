@@ -1,0 +1,40 @@
+udf normalize_amount(amount decimal) returns decimal
+
+param data_dir = "./sample_data/in"
+param out_dir = "./sample_data/out"
+
+source sales_src {
+    format = "csv"
+    path = "{data_dir}/sales.csv"
+    header = "true"
+}
+
+dataset sales from sales_src
+
+transform clean_sales = from sales use
+    filter { amount > 0 and regex_match(refunded, "false") }
+    withColumn { y = "2024", m = "01", norm_amount = normalize_amount(amount) }
+    select { id, store_id, y, m, norm_amount, concat(store_id, "-id") }
+    orderBy { store_id asc }
+    limit 5
+
+source stores_src {
+    format = "csv"
+    path = "{data_dir}/stores.csv"
+    header = "true"
+}
+
+dataset stores from stores_src
+
+transform joined = from clean_sales use
+    join left stores on store_id = store_id
+    groupBy { store_id } { total = sum(norm_amount), cnt = count(store_id) }
+    window { partitionBy { store_id } orderBy { total desc } withColumn { rnk = row_number() } }
+
+sink report {
+    format = "csv"
+    path = "{out_dir}/report_udf.csv"
+    mode = "overwrite"
+}
+
+write joined into report

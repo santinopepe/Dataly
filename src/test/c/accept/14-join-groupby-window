@@ -1,0 +1,36 @@
+param data_dir = "/data/in"
+param out_dir = "/data/out"
+
+source sales_src {
+    format = "csv"
+    path = "{data_dir}/sales.csv"
+    header = "true"
+}
+
+source stores_src {
+    format = "csv"
+    path = "{data_dir}/stores.csv"
+    header = "true"
+}
+
+dataset sales from sales_src
+dataset stores from stores_src
+
+transform clean_sales = from sales use
+    filter { amount > 0 }
+    withColumn { y = "2024", m = "01" }
+    select { id, store_id, y, m, amount }
+
+transform sales_enriched = from clean_sales use
+    join left stores on store_id = store_id
+    select { store_id, y, m, amount }
+    orderBy { store_id asc }
+    limit 10
+
+sink report {
+    format = "csv"
+    path = "{out_dir}/report.csv"
+    mode = "overwrite"
+}
+
+write sales_enriched into report
