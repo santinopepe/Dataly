@@ -86,8 +86,10 @@ static void sanitizeStringLiteral(const char* input, char* output, size_t outSiz
 
     const char* start = input;
     size_t len = strlen(input);
-    if (len >= 2 && input[0] == '"' && input[len - 1] == '"') {
-        start = input + 1;
+    while (len >= 2 &&
+           ((start[0] == '"' && start[len - 1] == '"') ||
+            (start[0] == '\'' && start[len - 1] == '\''))) {
+        start += 1;
         len -= 2;
     }
 
@@ -110,9 +112,42 @@ static void emitPyStringLiteral(const char* raw) {
 }
 
 static void emitJsonString(const char* raw) {
-    char buf[1024];
-    sanitizeStringLiteral(raw, buf, sizeof(buf));
-    manifestOut("\"%s\"", buf);
+    /* Emite una cadena válida para JSON: elimina comillas exteriores
+       si las tiene y escapa los caracteres necesarios (\" y \\\ y
+       controles). No reutilizamos sanitizeStringLiteral porque esa
+       función está orientada a literales Python (escapa comillas
+       simples) mientras que aquí necesitamos escapar comillas dobles. */
+    if (!raw) { manifestOut("\"\""); return; }
+
+    const char* start = raw;
+    size_t len = strlen(raw);
+    while (len >= 2 &&
+           ((start[0] == '"' && start[len - 1] == '"') ||
+            (start[0] == '\'' && start[len - 1] == '\''))) {
+        start += 1;
+        len -= 2;
+    }
+
+    manifestOut("\"");
+    for (size_t i = 0; i < len; ++i) {
+        unsigned char c = (unsigned char)start[i];
+        switch (c) {
+            case '"': manifestOut("\\\""); break;
+            case '\\': manifestOut("\\\\"); break;
+            case '\b': manifestOut("\\b"); break;
+            case '\f': manifestOut("\\f"); break;
+            case '\n': manifestOut("\\n"); break;
+            case '\r': manifestOut("\\r"); break;
+            case '\t': manifestOut("\\t"); break;
+            default:
+                if (c < 0x20) {
+                    manifestOut("\\u%04x", c);
+                } else {
+                    manifestOut("%c", c);
+                }
+        }
+    }
+    manifestOut("\"");
 }
 
 static void toUpperSnake(const char* input, char* output, size_t outSize) {
@@ -282,7 +317,10 @@ static SchemaInfo schemaFromSelectOp(const SchemaInfo* base, SelectOperation* se
             } else {
                 char gen[32];
                 snprintf(gen, sizeof(gen), "col_%zu", idx);
-                name = gen;
+                char* heapName = strdup(gen);
+                addColumnName(&out, heapName);
+                free(heapName);
+                continue;
             }
         }
         addColumnName(&out, name);
@@ -352,7 +390,6 @@ static void setSchemaEntry(NamedSchema** arrPtr, size_t* capPtr, size_t* countPt
 
     /* hacemos una copia profunda para no depender de punteros prestados */
     SchemaInfo stored = copySchemaInfo(&schema);
-    freeSchemaInfo(&schema);
 
     int idx = findSchemaIndex(arr, count, name);
     if (idx >= 0) {
@@ -381,9 +418,76 @@ static SchemaInfo* getSchemaEntry(NamedSchema* arr, size_t count, const char* na
 }
 
 static void computeSchemas(NamedSchema** arrayPtr, size_t* countPtr, Program* program) {
-    /* La inferencia de schema no es requerida por los tests actuales; devolvemos vacío para evitar uso de memoria temporal. */
-    *arrayPtr = NULL;
-    *countPtr = 0;
+    size_t cap = 0;
+    size_t count = 0;
+    NamedSchema* arr = NULL;
+
+    for (StatementList *it = program->statements; it != NULL; it = it->next) {
+        Statement *stmt = it->statement;
+        switch (stmt->type) {
+            case SOURCE_STMT: {
+                SchemaInfo s = (SchemaInfo){0}; /* unknown schema */
+                setSchemaEntry(&arr, &cap, &count, stmt->sourceDecl->name, s);
+                freeSchemaInfo(&s);
+                break;
+            }
+            case DATASET_STMT: {
+                SchemaInfo* src = getSchemaEntry(arr, count, stmt->datasetDecl->sourceName);
+                SchemaInfo s = src ? copySchemaInfo(src) : (SchemaInfo){0};
+                setSchemaEntry(&arr, &cap, &count, stmt->datasetDecl->name, s);
+                freeSchemaInfo(&s);
+                break;
+            }
+            case TRANSFORM_STMT: {
+                SchemaInfo* base = getSchemaEntry(arr, count, stmt->transformDecl->sourceName);
+                SchemaInfo cur = base ? copySchemaInfo(base) : (SchemaInfo){0};
+                for (TransformOperationList* opIt = stmt->transformDecl->operations; opIt != NULL; opIt = opIt->next) {
+                    TransformOperation* op = opIt->operation;
+                    if (!op) continue;
+                    switch (op->type) {
+                        case WITH_COLUMN_OP:
+                            cur = schemaAfterWithColumnOp(cur, op->withColumn);
+                            break;
+                        case SELECT_OP: {
+                            SchemaInfo tmp = schemaFromSelectOp(&cur, op->select);
+                            freeSchemaInfo(&cur);
+                            cur = tmp;
+                            break;
+                        }
+                        case JOIN_OP: {
+                            SchemaInfo* right = getSchemaEntry(arr, count, op->join->target);
+                            SchemaInfo tmp = schemaAfterJoinOp(&cur, right);
+                            freeSchemaInfo(&cur);
+                            cur = tmp;
+                            break;
+                        }
+                        case GROUP_BY_OP: {
+                            SchemaInfo tmp = schemaAfterGroupByOp(&cur, op->groupBy);
+                            freeSchemaInfo(&cur);
+                            cur = tmp;
+                            break;
+                        }
+                        case WINDOW_OP: {
+                            SchemaInfo tmp = schemaAfterWindowOp(&cur, op->windowOp);
+                            freeSchemaInfo(&cur);
+                            cur = tmp;
+                            break;
+                        }
+                        default:
+                            break;
+                    }
+                }
+                setSchemaEntry(&arr, &cap, &count, stmt->transformDecl->name, cur);
+                freeSchemaInfo(&cur);
+                break;
+            }
+            default:
+                break;
+        }
+    }
+
+    *arrayPtr = arr;
+    *countPtr = count;
 }
 
 static void freeSchemas(NamedSchema* arr, size_t count) {
@@ -1007,7 +1111,20 @@ static void generateManifest(Program *program) {
                 }
                 manifestOut("], \"returns\": \"%s\"", udfTypeToString(stmt->udfDecl->returnType));
             }
-    /* schema omitido: no inferimos columnas en esta versión */
+            /* schema */
+            for (size_t i = 0; i < schemaCount; i++) {
+                if (schemas[i].name && strcmp(schemas[i].name, name) == 0) {
+                    manifestOut(", \"schema\": [");
+                    bool sf = true;
+                    for (size_t c = 0; c < schemas[i].schema.count; c++) {
+                        if (!sf) manifestOut(", ");
+                        sf = false;
+                        manifestOut("{\"name\": \"%s\"}", schemas[i].schema.columns[c].name ? schemas[i].schema.columns[c].name : "");
+                    }
+                    manifestOut("]");
+                    break;
+                }
+            }
             if (stmt->type == TRANSFORM_STMT) {
                 manifestOut(", \"operations\": ");
                 writeOperations(stmt->transformDecl->operations);
