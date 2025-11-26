@@ -78,7 +78,6 @@ void yyerror(const YYLTYPE * location, const char * message) {}
  *
  * @see https://www.gnu.org/software/bison/manual/html_node/Destructor-Decl.html
  */
-%destructor { /* noop for program to keep AST alive for later phases */ } <program>
 %destructor { destroyConstant($$); } <constant>
 %destructor { destroyExpression($$); } <expression>
 %destructor { destroyFactor($$); } <factor>

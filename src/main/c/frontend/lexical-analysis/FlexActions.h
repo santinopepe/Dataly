@@ -25,7 +25,6 @@ CompilationStatus IntegerLexemeAction();
 CompilationStatus LeaveImportExpressionLexemeAction();
 CompilationStatus LeaveMultilineCommentLexemeAction();
 CompilationStatus ParenthesisLexemeAction(TokenLabel label);
-CompilationStatus SubexpressionLexemeAction();
 CompilationStatus UnknownLexemeAction();
 
 CompilationStatus KeywordLexemeAction(TokenLabel label);

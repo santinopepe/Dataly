@@ -23,7 +23,6 @@ extern CompilationStatus IntegerLexemeAction();
 extern CompilationStatus LeaveImportExpressionLexemeAction();
 extern CompilationStatus LeaveMultilineCommentLexemeAction();
 extern CompilationStatus ParenthesisLexemeAction(TokenLabel label);
-extern CompilationStatus SubexpressionLexemeAction();
 extern CompilationStatus UnknownLexemeAction();
 
 extern CompilationStatus KeywordLexemeAction(TokenLabel label);

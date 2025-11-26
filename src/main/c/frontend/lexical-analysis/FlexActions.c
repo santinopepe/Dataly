@@ -146,16 +146,6 @@ CompilationStatus ParenthesisLexemeAction(TokenLabel label) {
 	return status;
 }
 
-CompilationStatus SubexpressionLexemeAction() {
-	Token * token = createToken(_lexicalAnalyzer, IGNORED);
-	_inputBuffer = createInputBufferFromString(_lexicalAnalyzer, token->lexeme);
-	if (_logIgnoredLexemes) {
-		_logTokenAction(__FUNCTION__, token);
-	}
-	destroyToken(token);
-	return IN_PROGRESS;
-}
-
 CompilationStatus UnknownLexemeAction() {
 	Token * token = createToken(_lexicalAnalyzer, UNKNOWN);
 	_logTokenAction(__FUNCTION__, token);
