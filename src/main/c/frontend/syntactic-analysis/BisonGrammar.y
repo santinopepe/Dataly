@@ -89,10 +89,12 @@ void yyerror(const YYLTYPE * location, const char * message) {}
 %token <integer> INTEGER
 %token <token> ADD
 %token <token> CLOSE_BRACE
+%token <token> CLOSE_COMMENT
 %token <token> CLOSE_PARENTHESIS
 %token <token> DIV
 %token <token> MUL
 %token <token> OPEN_BRACE
+%token <token> OPEN_COMMENT
 %token <token> OPEN_PARENTHESIS
 %token <token> SUB
 
@@ -125,6 +127,7 @@ void yyerror(const YYLTYPE * location, const char * message) {}
 
 /* Operators and Punctuation */
 %token <token> ASSIGN
+%token <token> COLON
 %token <token> COMMA
 %token <token> GREATER
 %token <token> LESS
@@ -143,6 +146,8 @@ void yyerror(const YYLTYPE * location, const char * message) {}
 
 %token <token> IDENTIFIER
 %token <token> STRING_LITERAL
+%token <token> IGNORED
+%token <token> UNKNOWN
 
 /** Non-terminals. */
 %type <constant> constant
