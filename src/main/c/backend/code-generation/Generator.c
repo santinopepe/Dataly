@@ -39,7 +39,6 @@ static void openOutputs() {
     _pythonFile = fopen("run_pipeline.py", "w");
     if (!_dotFile || !_manifestFile || !_pythonFile) {
         logError(_logger, "Cannot open output files pipeline.dot / manifest.json / run_pipeline.py");
-        // Podrías manejar errores mejor si querés
     }
 }
 
@@ -48,8 +47,6 @@ static void closeOutputs() {
     if (_manifestFile) fclose(_manifestFile);
     if (_pythonFile) fclose(_pythonFile);
 }
-
-/* Helpers para escribir (podrías envolverlos más si querés) */
 
 static void dotOut(const char *fmt, ...) {
     if (!_dotFile) return;
@@ -78,7 +75,6 @@ static void pyOut(const char *fmt, ...) {
 /* ============ Helpers de strings para Python ============ */
 
 static void sanitizeStringLiteral(const char* input, char* output, size_t outSize) {
-    /* Quita comillas inicial/final si vienen del literal del DSL y escapa ' y \ para Python. */
     if (!input || outSize == 0) {
         if (outSize > 0) output[0] = '\0';
         return;
@@ -112,11 +108,6 @@ static void emitPyStringLiteral(const char* raw) {
 }
 
 static void emitJsonString(const char* raw) {
-    /* Emite una cadena válida para JSON: elimina comillas exteriores
-       si las tiene y escapa los caracteres necesarios (\" y \\\ y
-       controles). No reutilizamos sanitizeStringLiteral porque esa
-       función está orientada a literales Python (escapa comillas
-       simples) mientras que aquí necesitamos escapar comillas dobles. */
     if (!raw) { manifestOut("\"\""); return; }
 
     const char* start = raw;
@@ -215,7 +206,6 @@ static int findSchemaIndex(NamedSchema* arr, size_t count, const char* name) {
     return -1;
 }
 
-/* Serialización simple a JSON (sin escapar especial). */
 static void writeProperties(PropertyList *properties) {
     manifestOut("{");
     bool first = true;
@@ -247,8 +237,8 @@ static const char* joinTypeToPandasHow(enum JoinType type) {
         case JOIN_LEFT: return "left";
         case JOIN_RIGHT: return "right";
         case JOIN_FULL: return "outer";
-        case JOIN_SEMI: return "inner"; /* will filter later */
-        case JOIN_ANTI: return "left";  /* will filter later */
+        case JOIN_SEMI: return "inner"; 
+        case JOIN_ANTI: return "left";  
         case JOIN_INNER:
         default: return "inner";
     }
@@ -388,7 +378,6 @@ static void setSchemaEntry(NamedSchema** arrPtr, size_t* capPtr, size_t* countPt
     size_t cap = *capPtr;
     size_t count = *countPtr;
 
-    /* hacemos una copia profunda para no depender de punteros prestados */
     SchemaInfo stored = copySchemaInfo(&schema);
 
     int idx = findSchemaIndex(arr, count, name);
@@ -426,7 +415,7 @@ static void computeSchemas(NamedSchema** arrayPtr, size_t* countPtr, Program* pr
         Statement *stmt = it->statement;
         switch (stmt->type) {
             case SOURCE_STMT: {
-                SchemaInfo s = (SchemaInfo){0}; /* unknown schema */
+                SchemaInfo s = (SchemaInfo){0}; 
                 setSchemaEntry(&arr, &cap, &count, stmt->sourceDecl->name, s);
                 freeSchemaInfo(&s);
                 break;
@@ -525,7 +514,6 @@ static void emitPythonFooter() {
 
 static const char* boolToPy(bool value) { return value ? "True" : "False"; }
 
-/* Muy básica: convierte una Expression a string Python usando df[...] */
 static void expressionToPython(Expression* expr, char* buffer, size_t bufferSize, const char* dfVar) {
     if (!expr) { snprintf(buffer, bufferSize, "None"); return; }
     switch (expr->type) {
@@ -612,7 +600,6 @@ static void expressionToPython(Expression* expr, char* buffer, size_t bufferSize
             snprintf(buffer, bufferSize, "%s[\"%s\"]", dfVar, expr->identifier);
             break;
         case FUNCTION_CALL: {
-            /* Simplificación: delega en pandas funciones básicas; si no, marca NotImplemented */
             if (!expr->functionCall.functionName) { snprintf(buffer, bufferSize, "None"); break; }
             const char* fname = expr->functionCall.functionName;
             ExpressionList* args = expr->functionCall.arguments;
@@ -659,7 +646,6 @@ static void expressionToPython(Expression* expr, char* buffer, size_t bufferSize
                 int n = snprintf(buffer, bufferSize, "%s.fillna(%s)", a, bBuf);
                 if (n < 0 || (size_t)n >= bufferSize) buffer[bufferSize - 1] = '\0';
             } else {
-                /* UDF/función no soportada: llamar helper para que falle en runtime */
                 snprintf(buffer, bufferSize, "_udf(\"%s\")", fname);
             }
             break;
@@ -757,7 +743,7 @@ static void emitTransformPython(TransformDeclaration* transform) {
                         item->expression->factor->type == IDENTIFIER_FACTOR) {
                         pyOut("\"%s\"", item->expression->factor->identifier);
                     } else {
-                        pyOut("\"_expr_%p\"", (void*)item->expression); /* marcador */
+                        pyOut("\"_expr_%p\"", (void*)item->expression);
                     }
                 }
                 pyOut("], ascending=[");
@@ -777,7 +763,6 @@ static void emitTransformPython(TransformDeclaration* transform) {
                 pyOut("    _right = datasets.get(\"%s\")\n", op->join->target ? op->join->target : "");
                 pyOut("    if _right is None:\n");
                 pyOut("        raise NotImplementedError(\"JOIN target missing: %s\")\n", op->join->target ? op->join->target : "");
-                /* Detect simple equality condition colA = colB */
                 const char* leftKey = NULL;
                 const char* rightKey = NULL;
                 if (op->join->condition && op->join->condition->type == COMPARISON &&
@@ -855,7 +840,6 @@ static void emitTransformPython(TransformDeclaration* transform) {
             case WINDOW_OP: {
                 pyOut("    # window\n");
                 pyOut("    _window_df = df\n");
-                /* partitionBy -> sort within partitions */
                 pyOut("    _partition_cols = []\n");
                 for (ColumnList* p = op->windowOp->partitionBy; p != NULL; p = p->next) {
                     if (p->expression && p->expression->type == FACTOR &&
@@ -893,7 +877,6 @@ static void emitTransformPython(TransformDeclaration* transform) {
                             pyOut("        raise NotImplementedError(\"WINDOW lead/lag require orderBy\")\n");
                             pyOut("    _shift = 1\n");
                             pyOut("    _col_ref = None\n");
-                            /* tomar primer argumento como columna */
                             if (a->expression->functionCall.arguments && a->expression->functionCall.arguments->expression &&
                                 a->expression->functionCall.arguments->expression->type == FACTOR &&
                                 a->expression->functionCall.arguments->expression->factor->type == IDENTIFIER_FACTOR) {
@@ -901,7 +884,6 @@ static void emitTransformPython(TransformDeclaration* transform) {
                             } else {
                                 pyOut("    raise NotImplementedError(\"lead/lag require column identifier as first argument\")\n");
                             }
-                            /* segundo argumento opcional: offset */
                             if (a->expression->functionCall.arguments && a->expression->functionCall.arguments->next) {
                                 pyOut("    try:\n");
                                 pyOut("        _shift = int(");
@@ -971,19 +953,6 @@ static void emitWritePython(WriteStatement* write) {
     pyOut("            print(f\"[WARN] Unsupported sink format {sink['format']}\")\n");
 }
 
-/* ============ Recorridos del AST ============ */
-
-/**
- * Acá asumimos la misma forma de Program que usaste en el semántico:
- *   - program->type == STATEMENT_LIST_PROGRAM
- *   - program->statements es una lista de StatementList
- *   - Statement tiene .type y punteros a paramDecl, sourceDecl, datasetDecl, ...
- *
- * Vamos a hacer:
- *   - generateDot(program)
- *   - generateManifest(program)
- */
-
 static void generateDot(Program *program) {
     dotOut("digraph pipeline {\n");
 
@@ -998,7 +967,6 @@ static void generateDot(Program *program) {
             case DATASET_STMT:
                 dotOut("    \"%s\" [shape=ellipse, style=filled, fillcolor=\"lightgreen\"];\n",
                        stmt->datasetDecl->name);
-                // edge source -> dataset
                 dotOut("    \"%s\" -> \"%s\";\n",
                        stmt->datasetDecl->sourceName,
                        stmt->datasetDecl->name);
@@ -1023,13 +991,11 @@ static void generateDot(Program *program) {
                        stmt->sinkDecl->name);
                 break;
             case WRITE_STMT:
-                // edge dataset/transform -> sink
                 dotOut("    \"%s\" -> \"%s\";\n",
                        stmt->writeStmt->datasetName,
                        stmt->writeStmt->sinkName);
                 break;
             case PARAM_STMT:
-                // Podés decidir si aparecen en el grafo o no
                 break;
         }
     }
@@ -1038,7 +1004,6 @@ static void generateDot(Program *program) {
 }
 
 static void generateManifest(Program *program) {
-    // Manifest enriquecido: schema básico de columnas, operaciones y propiedades.
     manifestOut("{\n");
     manifestOut("  \"parameters\": [\n");
     bool first = true;
@@ -1229,11 +1194,9 @@ CompilationStatus executeGenerator(CompilerState *compilerState) {
 
     if (program->type != STATEMENT_LIST_PROGRAM) {
         if (program->type == EXPRESSION_PROGRAM) {
-			//Programas de solo expresión no generan código para el backend Dataly.
             logDebugging(_logger, "Expression-only program: nothing to generate for Dataly backend.");
             return SUCCEEDED;
         }
-        /* Unknown program kind -> fail. */
         logError(_logger, "Unsupported program type for Dataly backend.");
         return FAILED;
     }

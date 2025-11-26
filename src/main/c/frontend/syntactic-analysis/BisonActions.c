@@ -95,7 +95,6 @@ Program * ExpressionProgramSemanticAction(Expression * expression) {
 	program->expression = expression;
 	program->type = EXPRESSION_PROGRAM;
 
-	// Guardar el AST en el estado del compilador para despues 
 	if (_compilerState != NULL) {
 		_compilerState->abstractSyntaxtTree = program;
 	}
@@ -125,7 +124,6 @@ Program * StatementsSemanticAction(StatementList * statements) {
 	program->statements = statements;
 	program->type = STATEMENT_LIST_PROGRAM;
 
-	// Guardar el AST en el estado del compilador para despues
 	if (_compilerState != NULL) {
 		_compilerState->abstractSyntaxtTree = program;
 	}

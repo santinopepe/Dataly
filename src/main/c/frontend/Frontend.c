@@ -171,7 +171,7 @@ void destroyToken(Token * token) {
 			token->lexeme = NULL;
 		}
 		if (token->semanticValue != NULL) {
-			token->semanticValue->token = (TokenLabel) 0; /* clear pointer */
+			token->semanticValue->token = (TokenLabel) 0; 
 			free(token->semanticValue);
 			token->semanticValue = NULL;
 		}
