@@ -466,6 +466,8 @@ static void validateExpressionIdentifiers(SemanticContext* ctx, Expression* expr
                 validateExpressionIdentifiers(ctx, arg->expression, schema);
             }
             break;
+        default:
+            break;
     }
 }
 
@@ -633,6 +635,8 @@ static Schema* computeTransformSchema(SemanticContext* ctx, TransformDeclaration
             case WINDOW_OP:
                 current = schemaAfterWindow(current, op->windowOp, ctx);
                 break;
+            default:
+                break;
         }
     }
     return current;
@@ -771,6 +775,8 @@ static void firstPass_buildSymbols(SemanticContext* ctx, Program* program) {
                 break;
             case WRITE_STMT:
                 break;
+            default:
+                break;
         }
     }
 }
@@ -836,6 +842,8 @@ static void secondPass_validateUses(SemanticContext* ctx, Program* program) {
                         case JOIN_OP:
                         case GROUP_BY_OP:
                         case WINDOW_OP:
+                            break;
+                        default:
                             break;
                     }
                     if (exprsToCheck) {

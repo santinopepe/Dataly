@@ -290,6 +290,8 @@ static void writeOperations(TransformOperationList *operations) {
             case WINDOW_OP:
                 manifestOut("{\"type\":\"window\"}");
                 break;
+            default:
+                break;
         }
     }
     manifestOut("]");
@@ -543,6 +545,9 @@ static void expressionToPython(Expression* expr, char* buffer, size_t bufferSize
 				}
 				case BOOLEAN_CONST: snprintf(buffer, bufferSize, "%s", boolToPy(c->boolValue)); break;
 				case NULL_CONST: snprintf(buffer, bufferSize, "None"); break;
+				default:
+					snprintf(buffer, bufferSize, "None");
+					break;
 			}
 		} else if (expr->factor->type == IDENTIFIER_FACTOR) {
 			snprintf(buffer, bufferSize, "%s[\"%s\"]", dfVar, expr->factor->identifier);
@@ -576,6 +581,9 @@ static void expressionToPython(Expression* expr, char* buffer, size_t bufferSize
                     case LESS_EQUAL_OP: op = "<="; break;
                     case IS_NULL_OP: op = "is None"; break;
                     case IS_NOT_NULL_OP: op = "is not None"; break;
+                    default:
+                        op = "==";
+                        break;
                 }
             } else if (expr->type == LOGICAL) {
                 switch (expr->logOp) {
@@ -588,6 +596,9 @@ static void expressionToPython(Expression* expr, char* buffer, size_t bufferSize
                         }
                         return;
                     }
+                    default:
+                        op = "&";
+                        break;
                 }
             }
             int n = snprintf(buffer, bufferSize, "(%s %s %s)", left, op, right);
@@ -650,6 +661,9 @@ static void expressionToPython(Expression* expr, char* buffer, size_t bufferSize
             }
             break;
         }
+        default:
+            snprintf(buffer, bufferSize, "None");
+            break;
     }
 }
 

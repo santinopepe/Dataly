@@ -58,6 +58,8 @@ void destroyExpression(Expression * expression) {
 			}
 			destroyExpressionList(expression->functionCall.arguments);
 			break;
+		default:
+			break;
 	}
 	free(expression);
 }
@@ -77,6 +79,8 @@ void destroyFactor(Factor * factor) {
 				if (factor->identifier != NULL) {
 					free(factor->identifier);
 				}
+				break;
+			default:
 				break;
 		}
 		free(factor);
@@ -121,6 +125,8 @@ void destroyStatement(Statement * statement) {
 			break;
 		case UDF_STMT:
 			destroyUdfDeclaration(statement->udfDecl);
+			break;
+		default:
 			break;
 	}
 	free(statement);
@@ -236,6 +242,8 @@ void destroyTransformOperation(TransformOperation * operation) {
 			break;
 		case WINDOW_OP:
 			destroyWindowOperation(operation->windowOp);
+			break;
+		default:
 			break;
 	}
 	free(operation);
