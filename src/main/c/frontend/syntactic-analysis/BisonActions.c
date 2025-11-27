@@ -1,5 +1,6 @@
 #include "BisonActions.h"
 #include <string.h>
+#include <stdbool.h>
 
 /* MODULE INTERNAL STATE */
 
@@ -55,6 +56,15 @@ Expression * ArithmeticExpressionSemanticAction(Expression * leftExpression, Exp
 	return expression;
 }
 
+Expression * NotExpressionSemanticAction(Expression * expr) {
+	_logSyntacticAnalyzerAction(__FUNCTION__);
+	Expression * expression = calloc(1, sizeof(Expression));
+	expression->leftExpression = expr;
+	expression->type = LOGICAL;
+	expression->logOp = NOT_OP;
+	return expression;
+}
+
 Expression * FactorExpressionSemanticAction(Factor * factor) {
 	_logSyntacticAnalyzerAction(__FUNCTION__);
 	Expression * expression = calloc(1, sizeof(Expression));
@@ -85,7 +95,6 @@ Program * ExpressionProgramSemanticAction(Expression * expression) {
 	program->expression = expression;
 	program->type = EXPRESSION_PROGRAM;
 
-	// Guardar el AST en el estado del compilador para despues 
 	if (_compilerState != NULL) {
 		_compilerState->abstractSyntaxtTree = program;
 	}
@@ -115,7 +124,6 @@ Program * StatementsSemanticAction(StatementList * statements) {
 	program->statements = statements;
 	program->type = STATEMENT_LIST_PROGRAM;
 
-	// Guardar el AST en el estado del compilador para despues
 	if (_compilerState != NULL) {
 		_compilerState->abstractSyntaxtTree = program;
 	}
@@ -193,6 +201,14 @@ Statement * WriteStatementSemanticAction(WriteStatement * write) {
 	Statement * statement = calloc(1, sizeof(Statement));
 	statement->writeStmt = write;
 	statement->type = WRITE_STMT;
+	return statement;
+}
+
+Statement * UdfDeclarationSemanticAction(UdfDeclaration * udf) {
+	_logSyntacticAnalyzerAction(__FUNCTION__);
+	Statement * statement = calloc(1, sizeof(Statement));
+	statement->udfDecl = udf;
+	statement->type = UDF_STMT;
 	return statement;
 }
 
@@ -317,6 +333,46 @@ TransformOperation * SelectOperationSemanticAction(SelectOperation * select) {
 	return operation;
 }
 
+TransformOperation * OrderByOperationSemanticAction(OrderByOperation * orderBy) {
+	_logSyntacticAnalyzerAction(__FUNCTION__);
+	TransformOperation * operation = calloc(1, sizeof(TransformOperation));
+	operation->orderBy = orderBy;
+	operation->type = ORDER_BY_OP;
+	return operation;
+}
+
+TransformOperation * LimitOperationSemanticAction(LimitOperation * limit) {
+	_logSyntacticAnalyzerAction(__FUNCTION__);
+	TransformOperation * operation = calloc(1, sizeof(TransformOperation));
+	operation->limitOp = limit;
+	operation->type = LIMIT_OP;
+	return operation;
+}
+
+TransformOperation * JoinOperationSemanticAction(JoinOperation * join) {
+	_logSyntacticAnalyzerAction(__FUNCTION__);
+	TransformOperation * operation = calloc(1, sizeof(TransformOperation));
+	operation->join = join;
+	operation->type = JOIN_OP;
+	return operation;
+}
+
+TransformOperation * GroupByOperationSemanticAction(GroupByOperation * groupBy) {
+	_logSyntacticAnalyzerAction(__FUNCTION__);
+	TransformOperation * operation = calloc(1, sizeof(TransformOperation));
+	operation->groupBy = groupBy;
+	operation->type = GROUP_BY_OP;
+	return operation;
+}
+
+TransformOperation * WindowOperationSemanticAction(WindowOperation * windowOp) {
+	_logSyntacticAnalyzerAction(__FUNCTION__);
+	TransformOperation * operation = calloc(1, sizeof(TransformOperation));
+	operation->windowOp = windowOp;
+	operation->type = WINDOW_OP;
+	return operation;
+}
+
 FilterOperation * CreateFilterSemanticAction(Expression * condition) {
 	_logSyntacticAnalyzerAction(__FUNCTION__);
 	FilterOperation * filter = calloc(1, sizeof(FilterOperation));
@@ -336,6 +392,65 @@ SelectOperation * CreateSelectSemanticAction(ColumnList * columns) {
 	SelectOperation * select = calloc(1, sizeof(SelectOperation));
 	select->columns = columns;
 	return select;
+}
+
+OrderByOperation * CreateOrderBySemanticAction(OrderByItem * items) {
+	_logSyntacticAnalyzerAction(__FUNCTION__);
+	OrderByOperation * orderBy = calloc(1, sizeof(OrderByOperation));
+	orderBy->items = items;
+	return orderBy;
+}
+
+LimitOperation * CreateLimitSemanticAction(int limit) {
+	_logSyntacticAnalyzerAction(__FUNCTION__);
+	LimitOperation * op = calloc(1, sizeof(LimitOperation));
+	op->limit = limit;
+	return op;
+}
+
+JoinOperation * CreateJoinSemanticAction(enum JoinType type, TokenLabel target, Expression * condition) {
+	_logSyntacticAnalyzerAction(__FUNCTION__);
+	JoinOperation * op = calloc(1, sizeof(JoinOperation));
+	op->joinType = type;
+	op->target = copyTokenText(target);
+	op->condition = condition;
+	return op;
+}
+
+GroupByOperation * CreateGroupBySemanticAction(ColumnList * keys, ColumnAssignmentList * aggregations) {
+	_logSyntacticAnalyzerAction(__FUNCTION__);
+	GroupByOperation * op = calloc(1, sizeof(GroupByOperation));
+	op->keys = keys;
+	op->aggregations = aggregations;
+	return op;
+}
+
+WindowOperation * CreateWindowSemanticAction(ColumnList * partitionBy, OrderByItem * orderBy, ColumnAssignmentList * computations) {
+	_logSyntacticAnalyzerAction(__FUNCTION__);
+	WindowOperation * op = calloc(1, sizeof(WindowOperation));
+	op->partitionBy = partitionBy;
+	op->orderBy = orderBy;
+	op->computations = computations;
+	return op;
+}
+
+OrderByItem * CreateOrderByItemSemanticAction(Expression * expr, bool ascending) {
+	_logSyntacticAnalyzerAction(__FUNCTION__);
+	OrderByItem * item = calloc(1, sizeof(OrderByItem));
+	item->expression = expr;
+	item->ascending = ascending;
+	return item;
+}
+
+OrderByItem * AddOrderByItemSemanticAction(OrderByItem * list, OrderByItem * item) {
+	_logSyntacticAnalyzerAction(__FUNCTION__);
+	if (list == NULL) {
+		return item;
+	}
+	OrderByItem * current = list;
+	while (current->next != NULL) current = current->next;
+	current->next = item;
+	return list;
 }
 
 ColumnAssignmentList * CreateColumnAssignmentsSemanticAction(ColumnAssignment * assignment) {
@@ -372,18 +487,20 @@ ColumnAssignment * CreateColumnAssignmentSemanticAction(TokenLabel name, Express
 	return assignment;
 }
 
-ColumnList * CreateColumnListSemanticAction(TokenLabel name) {
+ColumnList * CreateColumnListSemanticAction(Expression * expression, TokenLabel alias) {
 	_logSyntacticAnalyzerAction(__FUNCTION__);
 	ColumnList * columns = calloc(1, sizeof(ColumnList));
-	columns->columnName = copyTokenText(name);
+	columns->expression = expression;
+	columns->alias = copyTokenText(alias);
 	columns->next = NULL;
 	return columns;
 }
 
-ColumnList * AddColumnSemanticAction(ColumnList * columns, TokenLabel name) {
+ColumnList * AddColumnSemanticAction(ColumnList * columns, Expression * expression, TokenLabel alias) {
 	_logSyntacticAnalyzerAction(__FUNCTION__);
 	ColumnList * newColumn = calloc(1, sizeof(ColumnList));
-	newColumn->columnName = copyTokenText(name);
+	newColumn->expression = expression;
+	newColumn->alias = copyTokenText(alias);
 	newColumn->next = NULL;
 	
 	if (columns == NULL) {
@@ -396,6 +513,65 @@ ColumnList * AddColumnSemanticAction(ColumnList * columns, TokenLabel name) {
 	}
 	current->next = newColumn;
 	return columns;
+}
+
+ExpressionList * CreateExpressionListSemanticAction(Expression * expression) {
+	_logSyntacticAnalyzerAction(__FUNCTION__);
+	ExpressionList * list = calloc(1, sizeof(ExpressionList));
+	list->expression = expression;
+	list->next = NULL;
+	return list;
+}
+
+ExpressionList * AddExpressionSemanticAction(ExpressionList * list, Expression * expression) {
+	_logSyntacticAnalyzerAction(__FUNCTION__);
+	ExpressionList * item = calloc(1, sizeof(ExpressionList));
+	item->expression = expression;
+	item->next = NULL;
+	if (list == NULL) {
+		return item;
+	}
+	ExpressionList * current = list;
+	while (current->next != NULL) current = current->next;
+	current->next = item;
+	return list;
+}
+
+UdfParam * CreateUdfParamSemanticAction(TokenLabel name, UdfParamType type) {
+	_logSyntacticAnalyzerAction(__FUNCTION__);
+	UdfParam * param = calloc(1, sizeof(UdfParam));
+	param->name = copyTokenText(name);
+	param->type = type;
+	return param;
+}
+
+UdfParamList * CreateUdfParamListSemanticAction(UdfParam * param) {
+	_logSyntacticAnalyzerAction(__FUNCTION__);
+	UdfParamList * list = calloc(1, sizeof(UdfParamList));
+	list->param = param;
+	list->next = NULL;
+	return list;
+}
+
+UdfParamList * AddUdfParamSemanticAction(UdfParamList * list, UdfParam * param) {
+	_logSyntacticAnalyzerAction(__FUNCTION__);
+	UdfParamList * node = calloc(1, sizeof(UdfParamList));
+	node->param = param;
+	node->next = NULL;
+	if (list == NULL) return node;
+	UdfParamList * cur = list;
+	while (cur->next != NULL) cur = cur->next;
+	cur->next = node;
+	return list;
+}
+
+UdfDeclaration * CreateUdfDeclarationSemanticAction(TokenLabel name, UdfParamList * params, UdfParamType returnType) {
+	_logSyntacticAnalyzerAction(__FUNCTION__);
+	UdfDeclaration * udf = calloc(1, sizeof(UdfDeclaration));
+	udf->name = copyTokenText(name);
+	udf->params = params;
+	udf->returnType = returnType;
+	return udf;
 }
 
 
@@ -428,6 +604,15 @@ Factor * IdentifierFactorSemanticAction(TokenLabel identifier) {
 	factor->identifier = copyTokenText(identifier);
 	factor->type = IDENTIFIER_FACTOR;
 	return factor;
+}
+
+Expression * FunctionCallExpressionSemanticAction(TokenLabel name, ExpressionList * arguments) {
+	_logSyntacticAnalyzerAction(__FUNCTION__);
+	Expression * expression = calloc(1, sizeof(Expression));
+	expression->functionCall.functionName = copyTokenText(name);
+	expression->functionCall.arguments = arguments;
+	expression->type = FUNCTION_CALL;
+	return expression;
 }
 
 Expression * ComparisonExpressionSemanticAction(Expression * left, Expression * right, ComparisonOperator op) {

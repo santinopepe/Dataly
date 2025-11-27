@@ -33,15 +33,16 @@ void destroyConstant(Constant * constant) {
 void destroyExpression(Expression * expression) {
 	logDebugging(_logger, "Executing destructor: %s", __FUNCTION__);
 	if (expression != NULL) {
-		switch (expression->type) {
-			case ADDITION:
-			case DIVISION:
-			case MULTIPLICATION:
-			case SUBTRACTION:
-			case COMPARISON:
-			case LOGICAL:
-				destroyExpression(expression->leftExpression);
-				destroyExpression(expression->rightExpression);
+	switch (expression->type) {
+		case ADDITION:
+		case DIVISION:
+		case MULTIPLICATION:
+		case MODULO:
+		case SUBTRACTION:
+		case COMPARISON:
+		case LOGICAL:
+			destroyExpression(expression->leftExpression);
+			destroyExpression(expression->rightExpression);
 				break;
 			case FACTOR:
 				destroyFactor(expression->factor);
@@ -51,15 +52,17 @@ void destroyExpression(Expression * expression) {
 					free(expression->identifier);
 				}
 				break;
-			case FUNCTION_CALL:
-				if (expression->functionCall.functionName != NULL) {
-					free(expression->functionCall.functionName);
-				}
-				destroyExpression(expression->functionCall.argument);
-				break;
-		}
-		free(expression);
+		case FUNCTION_CALL:
+			if (expression->functionCall.functionName != NULL) {
+				free(expression->functionCall.functionName);
+			}
+			destroyExpressionList(expression->functionCall.arguments);
+			break;
+		default:
+			break;
 	}
+	free(expression);
+}
 }
 
 void destroyFactor(Factor * factor) {
@@ -76,6 +79,8 @@ void destroyFactor(Factor * factor) {
 				if (factor->identifier != NULL) {
 					free(factor->identifier);
 				}
+				break;
+			default:
 				break;
 		}
 		free(factor);
@@ -112,15 +117,20 @@ void destroyStatement(Statement * statement) {
 			case TRANSFORM_STMT:
 				destroyTransformDeclaration(statement->transformDecl);
 				break;
-			case SINK_STMT:
-				destroySinkDeclaration(statement->sinkDecl);
-				break;
-			case WRITE_STMT:
-				destroyWriteStatement(statement->writeStmt);
-				break;
-		}
-		free(statement);
+		case SINK_STMT:
+			destroySinkDeclaration(statement->sinkDecl);
+			break;
+		case WRITE_STMT:
+			destroyWriteStatement(statement->writeStmt);
+			break;
+		case UDF_STMT:
+			destroyUdfDeclaration(statement->udfDecl);
+			break;
+		default:
+			break;
 	}
+	free(statement);
+}
 }
 
 void destroyStatementList(StatementList * statements) {
@@ -208,19 +218,36 @@ void destroyPropertyList(PropertyList * properties) {
 void destroyTransformOperation(TransformOperation * operation) {
 	logDebugging(_logger, "Executing destructor: %s", __FUNCTION__);
 	if (operation != NULL) {
-		switch (operation->type) {
-			case FILTER_OP:
-				destroyFilterOperation(operation->filter);
-				break;
-			case WITH_COLUMN_OP:
-				destroyWithColumnOperation(operation->withColumn);
-				break;
-			case SELECT_OP:
-				destroySelectOperation(operation->select);
-				break;
-		}
-		free(operation);
+	switch (operation->type) {
+		case FILTER_OP:
+			destroyFilterOperation(operation->filter);
+			break;
+		case WITH_COLUMN_OP:
+			destroyWithColumnOperation(operation->withColumn);
+			break;
+		case SELECT_OP:
+			destroySelectOperation(operation->select);
+			break;
+		case ORDER_BY_OP:
+			destroyOrderByOperation(operation->orderBy);
+			break;
+		case LIMIT_OP:
+			destroyLimitOperation(operation->limitOp);
+			break;
+		case JOIN_OP:
+			destroyJoinOperation(operation->join);
+			break;
+		case GROUP_BY_OP:
+			destroyGroupByOperation(operation->groupBy);
+			break;
+		case WINDOW_OP:
+			destroyWindowOperation(operation->windowOp);
+			break;
+		default:
+			break;
 	}
+	free(operation);
+}
 }
 
 void destroyTransformOperationList(TransformOperationList * operations) {
@@ -277,8 +304,101 @@ void destroyColumnAssignmentList(ColumnAssignmentList * assignments) {
 void destroyColumnList(ColumnList * columns) {
 	logDebugging(_logger, "Executing destructor: %s", __FUNCTION__);
 	if (columns != NULL) {
-		if (columns->columnName != NULL) free(columns->columnName);
+		destroyExpression(columns->expression);
+		if (columns->alias != NULL) free(columns->alias);
 		destroyColumnList(columns->next);
 		free(columns);
+	}
+}
+
+void destroyUdfParam(UdfParam* param) {
+	logDebugging(_logger, "Executing destructor: %s", __FUNCTION__);
+	if (!param) return;
+	if (param->name) free(param->name);
+	free(param);
+}
+
+void destroyUdfParamList(UdfParamList* list) {
+	logDebugging(_logger, "Executing destructor: %s", __FUNCTION__);
+	if (!list) return;
+	destroyUdfParam(list->param);
+	destroyUdfParamList(list->next);
+	free(list);
+}
+
+void destroyUdfDeclaration(UdfDeclaration* udf) {
+	logDebugging(_logger, "Executing destructor: %s", __FUNCTION__);
+	if (!udf) return;
+	if (udf->name) free(udf->name);
+	destroyUdfParamList(udf->params);
+	free(udf);
+}
+
+void destroyOrderByItems(OrderByItem * items) {
+	logDebugging(_logger, "Executing destructor: %s", __FUNCTION__);
+	if (items != NULL) {
+		destroyExpression(items->expression);
+		destroyOrderByItems(items->next);
+		free(items);
+	}
+}
+
+void destroyOrderByList(OrderByList * list) {
+	logDebugging(_logger, "Executing destructor: %s", __FUNCTION__);
+	if (list != NULL) {
+		destroyOrderByItems(list->head);
+		free(list);
+	}
+}
+
+void destroyOrderByOperation(OrderByOperation * orderBy) {
+	logDebugging(_logger, "Executing destructor: %s", __FUNCTION__);
+	if (orderBy != NULL) {
+		destroyOrderByItems(orderBy->items);
+		free(orderBy);
+	}
+}
+
+void destroyLimitOperation(LimitOperation * limit) {
+	logDebugging(_logger, "Executing destructor: %s", __FUNCTION__);
+	if (limit != NULL) {
+		free(limit);
+	}
+}
+
+void destroyJoinOperation(JoinOperation * join) {
+	logDebugging(_logger, "Executing destructor: %s", __FUNCTION__);
+	if (join != NULL) {
+		if (join->target != NULL) free(join->target);
+		destroyExpression(join->condition);
+		free(join);
+	}
+}
+
+void destroyGroupByOperation(GroupByOperation * groupBy) {
+	logDebugging(_logger, "Executing destructor: %s", __FUNCTION__);
+	if (groupBy != NULL) {
+		destroyColumnList(groupBy->keys);
+		destroyColumnAssignmentList(groupBy->aggregations);
+		free(groupBy);
+	}
+}
+
+void destroyWindowOperation(WindowOperation * windowOp) {
+	logDebugging(_logger, "Executing destructor: %s", __FUNCTION__);
+	if (windowOp != NULL) {
+		destroyColumnList(windowOp->partitionBy);
+		destroyOrderByItems(windowOp->orderBy);
+		destroyColumnAssignmentList(windowOp->computations);
+		free(windowOp);
+	}
+}
+
+void destroyExpressionList(ExpressionList * list) {
+	logDebugging(_logger, "Executing destructor: %s", __FUNCTION__);
+	if (list != NULL) {
+		destroyExpression(list->expression);
+		destroyExpressionList(list->next);
+		free(list);
 	}
 }

@@ -24,7 +24,6 @@ ModuleDestructor initializeFrontendModule(LexicalAnalyzer * lexicalAnalyzer);
  * @see https://westes.github.io/flex/manual/Multiple-Input-Buffers.html
  */
 InputBuffer * createInputBuffer(LexicalAnalyzer * lexicalAnalyzer, const char * path);
-InputBuffer * createInputBufferFromString(LexicalAnalyzer * lexicalAnalyzer, const char * content);
 
 /**
  * Creates a new reentrant lexical-analyzer.

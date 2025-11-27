@@ -25,3 +25,8 @@ BisonParser.c
 BisonParser.h
 FlexScanner.c
 FlexScanner.h
+
+# Generated output files
+manifest.json
+pipeline.dot
+run_pipeline.py

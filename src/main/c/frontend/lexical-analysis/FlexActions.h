@@ -11,6 +11,7 @@
 #include "../../support/type/Token.h"
 #include "../../support/type/TokenLabel.h"
 #include "../Frontend.h"
+#include "../syntactic-analysis/AbstractSyntaxTree.h"
 
 /** Initialize module's internal state. */
 ModuleDestructor initializeFlexActionsModule();
@@ -24,12 +25,13 @@ CompilationStatus IntegerLexemeAction();
 CompilationStatus LeaveImportExpressionLexemeAction();
 CompilationStatus LeaveMultilineCommentLexemeAction();
 CompilationStatus ParenthesisLexemeAction(TokenLabel label);
-CompilationStatus SubexpressionLexemeAction();
 CompilationStatus UnknownLexemeAction();
 
 CompilationStatus KeywordLexemeAction(TokenLabel label);
 CompilationStatus IdentifierLexemeAction();
 CompilationStatus StringLiteralLexemeAction();
 CompilationStatus OperatorLexemeAction(TokenLabel label);
+CompilationStatus JoinTypeLexemeAction(enum JoinType type);
+CompilationStatus TypeTokenLexemeAction(UdfParamType type);
 
 #endif
