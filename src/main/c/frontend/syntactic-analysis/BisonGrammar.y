@@ -374,7 +374,6 @@ factor: OPEN_PARENTHESIS expression CLOSE_PARENTHESIS		{ $$ = ExpressionFactorSe
 	| constant												{ $$ = ConstantFactorSemanticAction($1); }
 	| IDENTIFIER											{ $$ = IdentifierFactorSemanticAction($1); }
 	| IDENTIFIER OPEN_PARENTHESIS expression_list CLOSE_PARENTHESIS { $$ = ExpressionFactorSemanticAction(FunctionCallExpressionSemanticAction($1, $3)); }
-	| IDENTIFIER OPEN_PARENTHESIS CLOSE_PARENTHESIS		{ $$ = ExpressionFactorSemanticAction(FunctionCallExpressionSemanticAction($1, NULL)); }
 	;
 
 expression_list: %empty									{ $$ = NULL; }
