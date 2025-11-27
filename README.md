@@ -99,7 +99,7 @@ Running the quick demo generates the following artifacts (they’re outputs, not
 
 - `manifest.json`: JSON representation of the pipeline graph (parameters, nodes, edges).
 - `pipeline.dot`: Graphviz diagram of the pipeline; render with `dot -Tpng pipeline.dot -o pipeline.png`.
-- `run_pipeline.py`: Auto-generated pandas executor; run with `DATA_DIR=sample_data/in OUT_DIR=sample_data/out python run_pipeline.py`.
+- `run_pipeline.py`: Auto-generated pandas executor; run with `DATA_DIR=sample_data/in OUT_DIR=sample_data/out python3 run_pipeline.py`.
 
 ## CI/CD
 
