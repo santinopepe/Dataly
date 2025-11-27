@@ -56,6 +56,16 @@ src/main/bash/run.sh <program>
 
 where `<program>` is the path to the file that represents its entry-point.
 
+#### Quick demo
+
+Run any DSL program using:
+
+```bash
+src/main/bash/run.sh <program>
+```
+
+Use your own `<program>` file (and inputs) to try the compiler end to end.
+
 ### Test
 
 Executes every available unit-test under `src/test/c` folder:
@@ -82,6 +92,14 @@ docker compose down
 | `docker image prune`                    | Removes all of the dangling images from Docker.         |
 | `docker network prune`                  | Removes unused networks from Docker.                    |
 | `docker volume prune`                   | Removes unused volumes from Docker.                     |
+
+## Sample pipeline artifacts
+
+Running the quick demo generates the following artifacts (they’re outputs, not kept in version control):
+
+- `manifest.json`: JSON representation of the pipeline graph (parameters, nodes, edges).
+- `pipeline.dot`: Graphviz diagram of the pipeline; render with `dot -Tpng pipeline.dot -o pipeline.png`.
+- `run_pipeline.py`: Auto-generated pandas executor; run with `DATA_DIR=sample_data/in OUT_DIR=sample_data/out python run_pipeline.py`.
 
 ## CI/CD
 
